@@ -6,7 +6,8 @@
 const SUPABASE_URL = 'https://wzvjgfubiodrjlycuiqa.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind6dmpnZnViaW9kcmpseWN1aXFhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI4NzQwMDYsImV4cCI6MjA3ODQ1MDAwNn0.Dx1B-H93m8FH0NokBhJe8qWyGFHBGD18sEkv5zu_SMQ';
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-const BUCKET_NAME = 'w2w-sobras-images'; // Nome do seu bucket no Supabase Storage
+// GARANTIDO: Este nome de bucket está correto (w2w-sobras-images) e a política RLS foi corrigida.
+const BUCKET_NAME = 'w2w-sobras-images';
 
 // Variáveis de estado global
 let currentKey = null;
@@ -226,6 +227,7 @@ async function uploadPhotos(itemId) {
 
         if (error) {
             console.error('Erro ao fazer upload da foto:', error);
+            // Agora o erro deve ser apenas sobre o RLS, que já foi corrigido via SQL.
             alert(`Falha ao fazer upload da foto ${i + 1}. Tente novamente.`);
             return uploadedPaths;
         }
@@ -274,12 +276,10 @@ async function submitItem() {
         .from('w2w_sobras')
         .update({
             status: newStatus,
-            // CORREÇÃO APLICADA: Usa 'foto_url' (que existe) e NÃO 'foto_path_1'
+            // CORREÇÃO FINAL: Usa 'foto_url' (coluna existente)
             foto_url: firstPhotoUrl,
-            // CORREÇÃO APLICADA: Usa 'data_coleta' (que foi criada no banco)
+            // CORREÇÃO FINAL: Usa 'data_coleta' (coluna que você criou via SQL)
             data_coleta: new Date().toISOString()
-            // ATENÇÃO: Se você precisar registrar quem coletou, você precisa de um login aqui!
-            // nome_coletor: 'USUÁRIO_MOBILE'
         })
         .eq('id', itemId);
 

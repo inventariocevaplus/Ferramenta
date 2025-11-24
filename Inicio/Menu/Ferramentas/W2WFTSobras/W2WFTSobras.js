@@ -335,9 +335,12 @@ async function showKeyDetails(chave, agrupadoStatus) {
     // Filtra pelos status que pertencem ao grupo (Pendente/Coletado OU Apenas Finalizado)
     const filter = agrupadoStatus === 'Finalizado' ? 'status.eq.Finalizado' : 'status.in.("Pendente", "Coletado")';
 
+    // CORREÇÃO APLICADA: Lista TODAS as colunas explicitamente, incluindo foto_url e data_coleta
     const { data, error } = await supabaseClient
         .from('w2w_sobras')
-        .select('chave, nome_usuario, ..., foto_url')
+        .select(`
+            id, chave, nome_contrato, item, qtd, data_inicio, data_fim, locacao, log_operacao, status, created_at, nome_usuario, foto_url, data_coleta
+        `)
         .eq('chave', chave)
         .or(filter)
         .order('created_at', { ascending: true });
@@ -375,22 +378,22 @@ async function showKeyDetails(chave, agrupadoStatus) {
     data.forEach((item, index) => {
         const itemStatus = item.status || 'Pendente';
         const itemStatusClass = itemStatus.toLowerCase();
+
         let fotoLinksHtml = '';
+        // CORREÇÃO APLICADA: Usa apenas a coluna 'foto_url' (que contém o caminho da primeira foto)
+        const fotoPath = item.foto_url;
 
-        // Geração dos links de foto
-        for (let i = 1; i <= 3; i++) {
-            const fotoPath = item[`foto_path_${i}`];
-            if (fotoPath) {
-                // Monta a URL pública para o bucket do Supabase
-                const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/${BUCKET_NAME}/${fotoPath}`;
+        if (fotoPath) {
+            // Monta a URL pública para o bucket do Supabase
+            const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/${BUCKET_NAME}/${fotoPath}`;
 
-                fotoLinksHtml += `
-                    <a href="${publicUrl}" target="_blank" title="Visualizar Foto ${i}">
-                        <i class="fas fa-image"></i> Foto ${i}
-                    </a>
-                `;
-            }
+            fotoLinksHtml += `
+                <a href="${publicUrl}" target="_blank" title="Visualizar Foto">
+                    <i class="fas fa-image"></i> Ver Foto
+                </a>
+            `;
         }
+
 
         html += `
             <div class="detail-item status-${itemStatusClass}">
@@ -404,6 +407,7 @@ async function showKeyDetails(chave, agrupadoStatus) {
                         <dt>Locação:</dt><dd>${item.locacao}</dd>
                         <dt>Qtd:</dt><dd><strong>${item.qtd}</strong></dd>
                         <dt>Usuário:</dt><dd>${item.nome_usuario}</dd>
+                        <dt>Data Coleta:</dt><dd>${item.data_coleta ? formatDate(item.data_coleta.split('T')[0]) : 'N/A'}</dd>
                         <dt>Log Operação:</dt><dd>${item.log_operacao}</dd>
                         <dt>Fotos:</dt><dd>${fotoLinksHtml || 'Nenhuma foto'}</dd>
                     </dl>
