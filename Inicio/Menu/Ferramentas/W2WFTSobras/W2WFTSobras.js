@@ -264,7 +264,7 @@ function generateExternalLink(chave) {
 
 
 // =================================================================
-// 6. LÓGICA DE BUSCA, AGRUPAMENTO E MODAL (AJUSTADO)
+// 6. LÓGICA DE BUSCA, AGRUPAMENTO E MODAL (AJUSTADO E CORRIGIDO)
 // =================================================================
 
 async function fetchSobras(status) {
@@ -325,6 +325,8 @@ function groupDataByChave(data) {
 
 /**
  * 🔑 FUNÇÃO: Abre o modal e busca todos os detalhes daquela CHAVE, incluindo fotos.
+ * 🎯 CORREÇÃO APLICADA: Os filtros de status agora usam .eq() ou .in() encadeados,
+ * combinando com o .eq('chave', chave), o que deve resolver o erro 400 (Bad Request).
  */
 async function showKeyDetails(chave, agrupadoStatus) {
     if (!detailsModal || !modalContentArea) return;
@@ -332,18 +334,29 @@ async function showKeyDetails(chave, agrupadoStatus) {
     modalContentArea.innerHTML = '<p style="text-align: center; color: #021D49;">Carregando detalhes...</p>';
     detailsModal.style.display = 'flex';
 
-    // Filtra pelos status que pertencem ao grupo (Pendente/Coletado OU Apenas Finalizado)
-    const filter = agrupadoStatus === 'Finalizado' ? 'status.eq.Finalizado' : 'status.in.("Pendente", "Coletado")';
-
-    // CORREÇÃO APLICADA: Lista TODAS as colunas explicitamente, incluindo foto_url e data_coleta
-    const { data, error } = await supabaseClient
+    // 1. Inicia a query com o filtro da chave
+    let query = supabaseClient
         .from('w2w_sobras')
         .select(`
             id, chave, nome_contrato, item, qtd, data_inicio, data_fim, locacao, log_operacao, status, created_at, nome_usuario, foto_url, data_coleta
         `)
-        .eq('chave', chave)
-        .or(filter)
-        .order('created_at', { ascending: true });
+        .eq('chave', chave); // Filtro primário: AND chave = X
+
+    // 2. Adiciona o filtro de status (combinado por AND)
+    if (agrupadoStatus === 'Finalizado') {
+        // Busca apenas 'Finalizado'
+        query = query.eq('status', 'Finalizado');
+    } else {
+        // Busca 'Pendente' OU 'Coletado'
+        query = query.in('status', ['Pendente', 'Coletado']);
+    }
+
+    // 3. Adiciona a ordenação
+    query = query.order('created_at', { ascending: true });
+
+
+    // Executa a query
+    const { data, error } = await query;
 
     if (error) {
         console.error(`Erro ao buscar detalhes da chave ${chave}:`, error);
