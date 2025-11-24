@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema de Inventário - Menu Principal</title>
+  <link rel="stylesheet" href="Menu.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+
+<div id="toast-container"></div> <div class="sidebar">
+  <div class="sidebar-header">
+    <h2>Inv. Sistema</h2>
+  </div>
+
+  <div id="dynamic-menu-buttons">
+  </div>
+
+  <div class="sidebar-footer">
+    <div id="user-info" class="user-info">
+      <i class="fas fa-user-circle"></i>
+      <span id="username-display">Carregando...</span>
+    </div>
+
+    <div id="dynamic-footer-button">
+    </div>
+
+    <button id="btn-logout" class="menu-button logout-button">
+      <i class="fas fa-sign-out-alt menu-icon"></i>
+      <span>SAIR DO SISTEMA</span>
+    </button>
+  </div>
+</div>
+
+<div class="main-content">
+  <div id="content-area">
+    <h1>Bem-vindo ao Sistema de Inventário</h1>
+    <p>Use o menu lateral para navegar entre os módulos.</p>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="Menu.js"></script>
+</body>
+</html>

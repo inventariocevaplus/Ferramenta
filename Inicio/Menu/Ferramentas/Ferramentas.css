@@ -1,0 +1,159 @@
+/*
+ * Arquivo: Ferramentas.css
+ * Estilos da tela principal (Menu, Sidebar e Área de Conteúdo).
+ */
+
+/* ------------------------------------------------------------------
+   1. CORREÇÃO DE SCROLL BAR E LAYOUT PRINCIPAL
+   ------------------------------------------------------------------ */
+
+html, body {
+    margin: 0;
+    padding: 0;
+    /* Garante que ocupe 100% da tela */
+    height: 100%;
+    width: 100%;
+    /* CRÍTICO: Remove todas as rolagens na página principal */
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    display: flex;
+    /* Usa 100% da altura da viewport definida acima */
+    min-height: 100%;
+}
+
+.ferramentas-main-layout {
+    display: flex;
+    /* Usa 100% da altura do body */
+    min-height: 100%;
+    width: 100%;
+}
+
+/* ------------------------------------------------------------------
+   2. BARRA LATERAL (SIDEBAR)
+   ------------------------------------------------------------------ */
+
+.sidebar-ferramentas {
+    width: 250px;
+    background-color: #021D49;
+    color: #FFFFFF;
+    padding: 0;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+    /* Garante que a sidebar ocupe toda a altura */
+    height: 100%;
+    /* A sidebar não deve rolar */
+    overflow-y: hidden;
+}
+
+.sidebar-header-ferramentas {
+    padding: 20px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-header-ferramentas h2 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+/* ------------------------------------------------------------------
+   3. BOTÕES E FOOTER
+   ------------------------------------------------------------------ */
+
+.ferr-menu-button {
+    background-color: transparent;
+    color: #FFFFFF;
+    border: none;
+    padding: 15px 20px;
+    text-align: left;
+    width: 100%;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    transition: background-color 0.3s;
+}
+
+.ferr-menu-button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.ferr-menu-icon {
+    margin-right: 10px;
+    font-size: 18px;
+}
+
+/* ------------------------------------------------------------------
+   4. RODAPÉ E USER INFO
+   ------------------------------------------------------------------ */
+
+.sidebar-footer-ferramentas {
+    margin-top: auto;
+    padding: 10px 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.user-info-ferramentas {
+    color: #FFFFFF;
+    padding: 10px 15px;
+    font-size: 14px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.user-info-ferramentas i {
+    margin-right: 10px;
+    font-size: 18px;
+    color: #E1261C;
+}
+
+.voltar-main-button {
+    background-color: #E1261C;
+    font-size: 14px;
+    text-transform: uppercase;
+    font-weight: bold;
+}
+
+.voltar-main-button:hover {
+    background-color: #c41e17;
+}
+
+/* ------------------------------------------------------------------
+   5. ÁREA DE CONTEÚDO
+   ------------------------------------------------------------------ */
+
+.ferramentas-content-area {
+    flex-grow: 1;
+    background-color: #ffffff;
+    padding: 30px;
+    /* CRÍTICO: Remove o overflow-y: auto para que esta área não gere
+       sua própria barra de rolagem vertical, eliminando uma das duas barras. */
+    overflow-y: hidden;
+}
+
+.welcome-card {
+    background-color: #ffffff;
+    padding: 25px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    color: #333;
+}
+
+.module-title {
+    color: #021D49;
+    font-size: 32px;
+    margin-top: 0;
+    border-bottom: 2px solid #E1261C;
+    padding-bottom: 10px;
+}

@@ -1,0 +1,217 @@
+/* ================================================= */
+/* CONFIGURAÇÃO BASE MOBILE */
+/* ================================================= */
+body {
+    font-family: 'Arial', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f0f4f8;
+    color: #333;
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
+}
+
+.mobile-container {
+    width: 100%;
+    max-width: 500px; /* Limite para telas de celular/tablet */
+    padding: 20px;
+    background-color: #FFFFFF;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+}
+
+.mobile-screen {
+    display: none;
+    animation: fadeIn 0.4s ease-in-out;
+}
+
+.mobile-screen.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.mobile-title {
+    color: #021D49;
+    text-align: center;
+    margin-bottom: 25px;
+    font-size: 24px;
+    border-bottom: 3px solid #E1261C;
+    padding-bottom: 10px;
+}
+
+.description {
+    text-align: center;
+    color: #666;
+    margin-bottom: 30px;
+}
+
+.section-title {
+    color: #E1261C;
+    font-size: 18px;
+    margin-top: 15px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+/* ================================================= */
+/* INPUTS E BOTÕES */
+/* ================================================= */
+.input-group {
+    margin-bottom: 20px;
+}
+
+.input-group label {
+    font-weight: bold;
+    color: #021D49;
+    margin-bottom: 5px;
+    display: block;
+}
+
+.custom-input {
+    width: 100%;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 18px;
+    box-sizing: border-box;
+    text-align: center;
+}
+
+.key-input {
+    font-family: monospace;
+    letter-spacing: 2px;
+    font-weight: bold;
+}
+
+.action-button {
+    width: 100%;
+    padding: 15px;
+    margin-top: 10px;
+    border: none;
+    border-radius: 8px;
+    background-color: #021D49;
+    color: white;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.action-button.finalizar {
+    background-color: #E1261C; /* Cor diferente para Finalizar */
+}
+.action-button.finalizar:hover {
+    background-color: #a81c14;
+}
+
+
+.action-button:hover {
+    background-color: #01467e;
+}
+
+.action-button:disabled {
+    background-color: #aaa;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.btn-discrete-small {
+    background: none;
+    border: none;
+    color: #666;
+    margin-top: 15px;
+    font-size: 14px;
+    cursor: pointer;
+    width: 100%;
+    text-align: center;
+}
+
+.btn-discrete-small:hover {
+    color: #E1261C;
+}
+
+.error-message {
+    color: #E1261C;
+    text-align: center;
+    margin-top: 10px;
+    font-weight: bold;
+}
+
+/* ================================================= */
+/* TELA DE COLETA E INFORMAÇÕES */
+/* ================================================= */
+
+.info-card {
+    background-color: #e0f7fa; /* Cor de fundo clara */
+    border-left: 5px solid #021D49;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.info-card p {
+    margin: 5px 0;
+    font-size: 16px;
+}
+
+.info-card strong {
+    color: #E1261C;
+}
+
+/* ================================================= */
+/* CAPTURA DE FOTOS */
+/* ================================================= */
+.photo-capture-area {
+    border: 2px dashed #ccc;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 25px;
+    text-align: center;
+}
+
+.photo-status {
+    font-weight: bold;
+    color: #021D49;
+    margin-bottom: 15px;
+}
+
+#photo-preview-container {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 15px;
+    min-height: 50px; /* Para não colapsar */
+}
+
+.photo-preview {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 2px solid #021D49;
+}
+
+.capture-button {
+    background-color: #28a745;
+}
+
+.capture-button:hover {
+    background-color: #1e7e34;
+}
+
+/* ================================================= */
+/* TELA DE SUCESSO */
+/* ================================================= */
+.success-icon {
+    font-size: 80px;
+    color: #28a745;
+    display: block;
+    text-align: center;
+    margin-bottom: 20px;
+}
