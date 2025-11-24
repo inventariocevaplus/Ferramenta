@@ -100,7 +100,13 @@
       <button id="btn-back-pending" style="background: none; border: none; cursor: pointer; color: #021D49; font-size: 16px; display: flex; align-items: center; padding: 0;">
         <i class="fas fa-arrow-left" style="margin-right: 8px;"></i> Voltar
       </button>
-      <h2 class="section-title" style="margin: 0 0 0 20px; padding: 0;">Itens Pendentes</h2>
+
+      <div style="display: flex; align-items: center; margin: 0 0 0 20px;">
+        <button id="btn-reload-pending" class="btn-reload" title="Recarregar Itens Pendentes">
+          <i class="fas fa-sync-alt"></i>
+        </button>
+        <h2 class="section-title" style="margin: 0; padding: 0 0 0 10px;">Itens Pendentes</h2>
+      </div>
     </div>
 
     <p class="sobras-description">Lista de chaves geradas aguardando processamento. Clique na linha para ver os detalhes.</p>
@@ -133,6 +139,18 @@
     </div>
   </div>
 </div>
+
+<div id="confirm-modal" class="modal">
+  <div class="modal-content confirm-content">
+    <div id="confirm-message" class="confirm-message-text"></div>
+    <div class="confirm-buttons">
+      <button id="confirm-cancel-btn" class="btn-cancel" type="button">Cancelar</button>
+      <button id="confirm-ok-btn" class="btn-delete" type="button">Sim, Excluir</button>
+    </div>
+  </div>
+</div>
+<div id="custom-toast" class="toast-message"></div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="W2WFTSobras.js"></script>
 </body>

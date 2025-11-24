@@ -2,7 +2,7 @@
  * Arquivo: W2WFTSobras.js
  * OBJETIVO: Conexão com Supabase, Lógica de agrupamento, Geração de link mobile,
  * Busca de Pendentes/Coletados/Finalizados e Modal de Detalhes com Fotos.
- * STATUS: AJUSTADO para suportar o fluxo mobile, manter usuário fixo e CORRIGIR a geração de link para ambiente web.
+ * STATUS: Versão COMPLETA + LÓGICA DE CONFIRMAÇÃO PERSONALIZADA (Substitui o confirm() nativo).
  */
 
 // =================================================================
@@ -19,10 +19,18 @@ const btnAddSobras = document.getElementById('btnAddSobras');
 const pendingListContainer = document.querySelector('#screen-pending .pending-list-container');
 const finishedListContainer = document.querySelector('#screen-finished .pending-list-container');
 
-// Mapeamento do Modal
+// Mapeamento do Modal de Detalhes
 const detailsModal = document.getElementById('details-modal');
 const modalCloseBtn = document.querySelector('.modal-close');
 const modalContentArea = document.getElementById('modal-details-content');
+const customToast = document.getElementById('custom-toast');
+
+// 🚨 Mapeamento do NOVO Modal de Confirmação
+const confirmModal = document.getElementById('confirm-modal');
+const confirmMessage = document.getElementById('confirm-message');
+const confirmOkBtn = document.getElementById('confirm-ok-btn');
+const confirmCancelBtn = document.getElementById('confirm-cancel-btn');
+
 
 // =================================================================
 // 1. DECLARAÇÃO DE VARIÁVEIS (Mapeamento de DOM)
@@ -41,7 +49,7 @@ const logEntryInput = document.getElementById('log-entry');
 const chkAtrelarInput = document.getElementById('chk-atrelar');
 
 // =================================================================
-// 2. FUNÇÕES DE UTILIDADE E DATA (MANTIDAS)
+// 2. FUNÇÕES DE UTILIDADE E DATA
 // =================================================================
 
 function enableAddSobrasButton() {
@@ -137,8 +145,65 @@ function handleDisplayClick(nativeInput) {
     }
 }
 
+// 🎯 FUNÇÃO TOAST: Exibe a mensagem discreta por 2 segundos
+function showToast(message, type = 'success', duration = 2000) {
+    if (!customToast) return;
+
+    // Configura a mensagem e a classe de estilo
+    customToast.textContent = message;
+    customToast.className = `toast-message show ${type}`;
+
+    // Remove a mensagem após a duração especificada
+    setTimeout(() => {
+        customToast.classList.remove('show');
+    }, duration);
+}
+
+// 🚨 NOVO: Função de Confirmação Personalizada
+function customConfirm(message, onConfirm) {
+    if (!confirmModal || !confirmMessage || !confirmOkBtn || !confirmCancelBtn) {
+        // Fallback para o confirm() nativo se o modal não for encontrado
+        if (window.confirm(message)) {
+            onConfirm();
+        }
+        return;
+    }
+
+    confirmMessage.innerHTML = message;
+    confirmModal.style.display = 'flex';
+
+    // Remove listeners anteriores para evitar múltiplos disparos
+    confirmOkBtn.replaceWith(confirmOkBtn.cloneNode(true));
+    confirmCancelBtn.replaceWith(confirmCancelBtn.cloneNode(true));
+
+    const newConfirmOkBtn = document.getElementById('confirm-ok-btn');
+    const newConfirmCancelBtn = document.getElementById('confirm-cancel-btn');
+
+
+    const handleOk = () => {
+        confirmModal.style.display = 'none';
+        onConfirm();
+    };
+
+    const handleCancel = () => {
+        confirmModal.style.display = 'none';
+    };
+
+    newConfirmOkBtn.addEventListener('click', handleOk);
+    newConfirmCancelBtn.addEventListener('click', handleCancel);
+
+    // Fechar ao clicar fora (se o target for o próprio modal)
+    window.addEventListener('click', function closeIfOutside(event) {
+        if (event.target === confirmModal) {
+            confirmModal.style.display = 'none';
+            window.removeEventListener('click', closeIfOutside); // Remove após uso
+        }
+    });
+}
+
+
 // =================================================================
-// 3. GERAÇÃO DE CHAVE E USUÁRIO (MANTIDA)
+// 3. GERAÇÃO DE CHAVE E USUÁRIO
 // =================================================================
 
 function generateKey() {
@@ -153,12 +218,12 @@ function handleGenerateKeyClick() {
     if (generatedKeyInput) {
         const key = generateKey();
         generatedKeyInput.value = key;
-        alert(`Nova chave gerada: ${key}`);
+        showToast(`Nova chave gerada: ${key}`, 'info', 3000);
     }
 }
 
 // =================================================================
-// 4. COLETA E ARMAZENAMENTO DE DADOS (MANTIDA)
+// 4. COLETA E ARMAZENAMENTO DE DADOS
 // =================================================================
 
 function getFormData() {
@@ -201,6 +266,10 @@ async function handleAddSobras() {
         return;
     }
 
+    // Desabilitar o botão enquanto processa para evitar cliques duplos
+    btnAddSobras.disabled = true;
+    btnAddSobras.textContent = 'Salvando...';
+
     const { error } = await supabaseClient.rpc('inserir_sobra_aprovada', {
         p_nome_contrato: dados.nome_contrato,
         p_data_inicio: dados.data_inicio,
@@ -213,18 +282,25 @@ async function handleAddSobras() {
         p_nome_usuario: SUPABASE_USER_NAME
     });
 
+    // Reabilita o botão
+    btnAddSobras.disabled = false;
+    btnAddSobras.textContent = `Adicionar Sobra (${SUPABASE_USER_NAME})`;
+
+
     if (error) {
         console.error('ERRO SUPABASE ao inserir sobra:', error);
         let userMessage = 'Falha ao salvar a sobra! Erro no banco de dados.';
         if (error.code === '42501') {
              userMessage = 'Ação Bloqueada (Permissão). Verifique as permissões da função RPC.';
         }
-        alert(`Erro: ${userMessage}\nDetalhe do erro: ${error.message}`);
+        showToast(`Erro: ${userMessage}`, 'error', 4000);
         return;
     }
 
-    alert(`Sobra adicionada com sucesso!\nChave: ${dados.chave}\nContrato: ${dados.nome_contrato}`);
+    // 🎯 Toast de Confirmação
+    showToast(`Sobra adicionada! Chave: ${dados.chave}`, 'success', 2000);
 
+    // Limpeza de campos
     if(locationInput) locationInput.value = '';
     if(itemInput) itemInput.value = '';
     if(quantityInput) quantityInput.value = '';
@@ -235,17 +311,14 @@ async function handleAddSobras() {
     if (!isAtrelarActive) {
         if(generatedKeyInput) generatedKeyInput.value = '';
     }
-
-    window.showPending();
 }
 
 // =================================================================
-// 5. FUNÇÃO AUXILIAR DE LINK EXTERNO 🎯 AJUSTADO PARA AMBIENTE WEB
+// 5. FUNÇÃO AUXILIAR DE LINK EXTERNO
 // =================================================================
 
 /**
  * Gera o link externo para a tela de coleta mobile (Mobile.html) e copia para a área de transferência.
- * Usa o caminho relativo para garantir que funcione em ambientes hospedados (GitHub Pages).
  */
 function generateExternalLink(chave) {
     // Caminho relativo para o Mobile.html (assume que está na mesma pasta)
@@ -254,23 +327,66 @@ function generateExternalLink(chave) {
     // Converte o caminho relativo em uma URL absoluta, usando a URL atual como base
     const absoluteLink = new URL(relativeLink, window.location.href).href;
 
+    // Usaremos o Toast para a confirmação de cópia, em vez do alert, para manter a consistência visual
     navigator.clipboard.writeText(absoluteLink).then(() => {
-        alert(`Link de Coleta Mobile copiado:\n${absoluteLink}`);
+        showToast(`Link de Coleta Mobile copiado para a área de transferência!`, 'success', 3000);
     }, (err) => {
         console.error('Falha ao copiar o link: ', err);
+        // Fallback para alert se a cópia falhar
         alert(`Não foi possível copiar o link. Copie manualmente:\n${absoluteLink}`);
     });
 }
 
 
 // =================================================================
-// 6. LÓGICA DE BUSCA, AGRUPAMENTO E MODAL (AJUSTADO E CORRIGIDO)
+// 6. LÓGICA DE BUSCA, AGRUPAMENTO, MODAL E EXCLUSÃO (AJUSTADO: USA customConfirm)
 // =================================================================
+
+/**
+ * 🗑️ FUNÇÃO CHAVE: Exclui todos os registros do banco de dados relacionados a uma chave.
+ */
+async function deleteKey(chave) {
+    if (!chave) return;
+
+    const message = `<p style="font-size: 1.1em; color: #E1261C;">ATENÇÃO!</p>
+                     <p>Você tem certeza que deseja EXCLUIR TODAS as linhas relacionadas à CHAVE <strong>${chave}</strong>?</p>
+                     <p style="font-weight: bold; margin-top: 10px;">Esta ação é irreversível.</p>`;
+
+    // 🚨 Usa o modal de confirmação personalizado
+    customConfirm(message, async () => {
+        // Lógica de exclusão que será executada se o usuário clicar em "Sim, Excluir"
+        showToast(`Excluindo chave ${chave}...`, 'info', 5000);
+
+        // 2. Excluir os registros da tabela w2w_sobras
+        const { error } = await supabaseClient
+            .from('w2w_sobras')
+            .delete()
+            .eq('chave', chave);
+
+        if (error) {
+            console.error(`ERRO SUPABASE ao excluir chave ${chave}:`, error);
+            showToast(`Falha ao excluir chave ${chave}. Verifique permissões.`, 'error', 4000);
+            return;
+        }
+
+        showToast(`Chave ${chave} e todos os registros relacionados excluídos com sucesso!`, 'success', 3000);
+
+        // 3. Recarrega a tela ativa para atualizar a lista
+        const screenPending = document.getElementById('screen-pending');
+        const screenFinished = document.getElementById('screen-finished');
+
+        if (screenPending && screenPending.classList.contains('active')) {
+            window.showPending();
+        } else if (screenFinished && screenFinished.classList.contains('active')) {
+            window.showFinished();
+        }
+    });
+}
+
 
 async function fetchSobras(status) {
     if (!supabaseClient) return [];
 
-    // Se for 'Pendente', buscamos 'Pendente' OU 'Coletado' (status intermediário)
     const filter = status === 'Pendente' ? 'status.in.("Pendente", "Coletado")' : `status.eq.${status}`;
 
     const { data, error } = await supabaseClient
@@ -291,7 +407,6 @@ async function fetchSobras(status) {
 
 function groupDataByChave(data) {
     const grouped = {};
-    // Prioridade de status para exibição no grupo: Finalizado > Coletado > Pendente
     const statusOrder = { 'Finalizado': 3, 'Coletado': 2, 'Pendente': 1 };
 
     data.forEach(item => {
@@ -311,7 +426,6 @@ function groupDataByChave(data) {
             };
         }
 
-        // Atualiza o status do grupo para o mais avançado entre os itens da chave
         if (statusOrder[item.status] > statusOrder[grouped[key].status]) {
             grouped[key].status = item.status;
         }
@@ -325,8 +439,6 @@ function groupDataByChave(data) {
 
 /**
  * 🔑 FUNÇÃO: Abre o modal e busca todos os detalhes daquela CHAVE, incluindo fotos.
- * 🎯 CORREÇÃO APLICADA: Os filtros de status agora usam .eq() ou .in() encadeados,
- * combinando com o .eq('chave', chave), o que deve resolver o erro 400 (Bad Request).
  */
 async function showKeyDetails(chave, agrupadoStatus) {
     if (!detailsModal || !modalContentArea) return;
@@ -334,28 +446,20 @@ async function showKeyDetails(chave, agrupadoStatus) {
     modalContentArea.innerHTML = '<p style="text-align: center; color: #021D49;">Carregando detalhes...</p>';
     detailsModal.style.display = 'flex';
 
-    // 1. Inicia a query com o filtro da chave
     let query = supabaseClient
         .from('w2w_sobras')
         .select(`
             id, chave, nome_contrato, item, qtd, data_inicio, data_fim, locacao, log_operacao, status, created_at, nome_usuario, foto_url, data_coleta
         `)
-        .eq('chave', chave); // Filtro primário: AND chave = X
+        .eq('chave', chave);
 
-    // 2. Adiciona o filtro de status (combinado por AND)
-    if (agrupadoStatus === 'Finalizado') {
-        // Busca apenas 'Finalizado'
-        query = query.eq('status', 'Finalizado');
-    } else {
-        // Busca 'Pendente' OU 'Coletado'
+    if (agrupadoStatus === 'Pendente' || agrupadoStatus === 'Coletado') {
         query = query.in('status', ['Pendente', 'Coletado']);
     }
 
-    // 3. Adiciona a ordenação
     query = query.order('created_at', { ascending: true });
 
 
-    // Executa a query
     const { data, error } = await query;
 
     if (error) {
@@ -377,7 +481,7 @@ async function showKeyDetails(chave, agrupadoStatus) {
         <div class="modal-summary">
             <p>Contrato: <strong>${data[0].nome_contrato}</strong></p>
             <p>Local Principal: <strong>${data[0].locacao}</strong></p>
-            <p>Total de Itens: <strong>${data.length}</strong></p>
+            <p>Total de Linhas: <strong>${data.length}</strong></p>
             <p>Quantidade Total: <strong>${totalQtd}</strong></p>
             <p>Status Agrupado: <strong class="status-${primaryStatusClass}">${agrupadoStatus.toUpperCase()}</strong></p>
         </div>
@@ -393,11 +497,9 @@ async function showKeyDetails(chave, agrupadoStatus) {
         const itemStatusClass = itemStatus.toLowerCase();
 
         let fotoLinksHtml = '';
-        // CORREÇÃO APLICADA: Usa apenas a coluna 'foto_url' (que contém o caminho da primeira foto)
         const fotoPath = item.foto_url;
 
         if (fotoPath) {
-            // Monta a URL pública para o bucket do Supabase
             const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/${BUCKET_NAME}/${fotoPath}`;
 
             fotoLinksHtml += `
@@ -412,7 +514,7 @@ async function showKeyDetails(chave, agrupadoStatus) {
             <div class="detail-item status-${itemStatusClass}">
                 <div class="detail-header">
                     <span class="detail-index">#${index + 1} - ID ${item.id}</span>
-                    <span class="detail-item-code">${item.item}</span>
+                    <span class="detail-item-code">ITEM: ${item.item}</span>
                 </div>
                 <div class="detail-body">
                     <dl>
@@ -429,7 +531,7 @@ async function showKeyDetails(chave, agrupadoStatus) {
         `;
     });
 
-    html += `</div></div>`; // Fecha details-list e modal-details-scroll
+    html += `</div></div>`;
     modalContentArea.innerHTML = html;
 }
 
@@ -448,13 +550,13 @@ function renderGroupedItems(container, groupedItems) {
         itemElement.className = `pending-item status-${group.status.toLowerCase()}`;
 
         itemElement.addEventListener('click', (e) => {
-            // Se o clique não foi no ícone, abre o modal
-            if (!e.target.closest('.link-icon')) {
+            if (!e.target.closest('.link-icon') && !e.target.closest('.delete-icon')) {
                 showKeyDetails(group.chave, group.status);
             }
         });
 
         const statusLabel = group.status.toUpperCase();
+        const isPendingOrCollected = (group.status === 'Pendente' || group.status === 'Coletado');
 
         itemElement.innerHTML = `
             <div class="pending-info">
@@ -463,19 +565,28 @@ function renderGroupedItems(container, groupedItems) {
                 <span class="pending-location">${group.locacao} (${formatDate(group.dataInicio)} - ${formatDate(group.dataFim)})</span>
             </div>
             <div class="pending-actions">
-                ${(group.status === 'Pendente' || group.status === 'Coletado') ?
+                <i class="fas fa-trash-alt delete-icon" title="Excluir todos os itens desta chave"></i>
+
+                ${isPendingOrCollected ?
                 '<i class="fas fa-link link-icon" title="Gerar link de coleta mobile"></i>' :
                 ''}
                 <span class="status-badge status-${group.status.toLowerCase()}">${statusLabel}</span>
             </div>
         `;
 
-        // Adiciona o Listener ao ícone de link
         const linkIcon = itemElement.querySelector('.link-icon');
         if (linkIcon) {
              linkIcon.addEventListener('click', (e) => {
-                 e.stopPropagation(); // Impede que o clique no ícone abra o modal
+                 e.stopPropagation();
                  generateExternalLink(group.chave);
+             });
+        }
+
+        const deleteIcon = itemElement.querySelector('.delete-icon');
+        if (deleteIcon) {
+             deleteIcon.addEventListener('click', (e) => {
+                 e.stopPropagation();
+                 deleteKey(group.chave);
              });
         }
 
@@ -494,7 +605,6 @@ window.showPending = async function() {
 
     if (pendingListContainer) pendingListContainer.innerHTML = '<p style="text-align: center;">Carregando...</p>';
 
-    // Busca Pendente E Coletado
     const sobrasPendentes = await fetchSobras('Pendente');
     const groupedItems = groupDataByChave(sobrasPendentes);
 
@@ -567,7 +677,7 @@ document.addEventListener('DOMContentLoaded', () => {
     enableAddSobrasButton();
     initNavigation();
 
-    // Listeners do Modal
+    // Listeners dos Modais
     if (modalCloseBtn) {
         modalCloseBtn.addEventListener('click', () => {
             if(detailsModal) detailsModal.style.display = 'none';
@@ -580,6 +690,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Listeners do Modal de Confirmação são configurados na função customConfirm
+
+
     // Listeners de Data, Key e AddSobras
     if(dateStartDisplay && dateEndDisplay) {
         dateStartDisplay.addEventListener('input', handleManualInput);
@@ -591,7 +704,4 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (btnGenerateKey) btnGenerateKey.addEventListener('click', handleGenerateKeyClick);
     if (btnAddSobras) btnAddSobras.addEventListener('click', handleAddSobras);
-
-    // Carrega a tela de pendentes como inicial
-    window.showPending();
 });

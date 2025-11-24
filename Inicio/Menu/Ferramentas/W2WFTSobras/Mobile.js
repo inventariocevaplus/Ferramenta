@@ -1,6 +1,8 @@
 /*
  * Arquivo: Mobile.js
  * OBJETIVO: Lógica de Coleta Mobile - Sequenciamento de Locações, Câmera e Upload para Supabase.
+ * AJUSTE: Ao finalizar o último item de uma chave, todos os itens daquela chave que já foram coletados
+ * ou estão sendo coletados são marcados como 'Finalizado'.
  */
 
 const SUPABASE_URL = 'https://wzvjgfubiodrjlycuiqa.supabase.co';
@@ -72,18 +74,27 @@ async function startCollection(chave) {
     // 1. Busca todos os itens pendentes para esta chave
     const { data, error } = await supabaseClient
         .from('w2w_sobras')
-        .select(`id, nome_contrato, locacao, item, qtd`)
+        .select(`id, nome_contrato, locacao, item, qtd, status`)
         .eq('chave', chave)
-        .eq('status', 'Pendente') // Busca apenas itens pendentes (não coletados, não finalizados)
+        .in('status', ['Pendente', 'Coletado']) // Busca itens PENDENTES e COLETADOS
         .order('id', { ascending: true });
 
     if (error || data.length === 0) {
-        keyErrorDiv.textContent = 'Erro ou Chave não encontrada, não pendente ou já coletada.';
+        keyErrorDiv.textContent = 'Erro ou Chave não encontrada, não pendente ou já finalizada.';
+        return;
+    }
+
+    // Filtra para iniciar a coleta apenas dos itens Pendentes
+    const pendingItems = data.filter(item => item.status === 'Pendente');
+
+    if (pendingItems.length === 0) {
+        keyErrorDiv.textContent = 'Esta chave está completamente coletada. Nenhuma ação pendente.';
         return;
     }
 
     currentKey = chave;
-    itemsToCollect = data;
+    // O array itemsToCollect só deve conter os itens PENDENTES
+    itemsToCollect = pendingItems;
     currentItemIndex = 0;
 
     switchScreen(screens.coleta);
@@ -92,7 +103,7 @@ async function startCollection(chave) {
 
 function loadCurrentItem() {
     if (currentItemIndex >= itemsToCollect.length) {
-        // Se todas as locações foram processadas, finaliza (embora a finalização ocorra no último submit)
+        // Isso não deve ocorrer se o fluxo estiver correto, mas é uma proteção
         finalizeKey();
         return;
     }
@@ -102,7 +113,7 @@ function loadCurrentItem() {
 
     // Atualiza o título e o botão
     coletaItemTitle.textContent = `Coleta (${currentItemIndex + 1} de ${itemsToCollect.length})`;
-    btnEnviarProxima.textContent = isLastItem ? 'FINALIZAR COLETA' : 'ENVIAR & Próxima Locação';
+    btnEnviarProxima.textContent = isLastItem ? 'FINALIZAR CHAVE' : 'ENVIAR & Próxima Locação';
     btnEnviarProxima.classList.toggle('finalizar', isLastItem);
 
     // Exibe as informações da locação
@@ -240,6 +251,29 @@ async function uploadPhotos(itemId) {
 // FUNÇÕES DE SUBMISSÃO E FINALIZAÇÃO
 // ===================================================
 
+/**
+ * 🎯 NOVA FUNÇÃO: Marca todos os itens da chave como 'Finalizado'.
+ */
+async function markKeyAsFinalized() {
+    if (!currentKey) return;
+
+    // Atualiza todos os itens que são desta chave E NÃO estão Finalizados
+    const { error } = await supabaseClient
+        .from('w2w_sobras')
+        .update({
+            status: 'Finalizado'
+        })
+        .eq('chave', currentKey)
+        .neq('status', 'Finalizado'); // Evita reescrever o que já é finalizado
+
+    if (error) {
+        console.error('Erro ao finalizar a chave no DB:', error);
+        // O erro não impede a coleta de ter terminado para o usuário
+        alert('A coleta foi concluída, mas houve um erro ao finalizar todos os itens no banco de dados. Verifique manualmente.');
+    }
+}
+
+
 async function submitItem() {
     if (photos.length === 0) {
         alert("Você deve tirar pelo menos uma foto para esta locação.");
@@ -260,14 +294,16 @@ async function submitItem() {
          // O upload falhou (erro já foi alertado dentro de uploadPhotos)
          btnEnviarProxima.disabled = false;
          btnCapturePhoto.disabled = false;
-         btnEnviarProxima.textContent = 'Tentar Enviar Novamente';
+         btnEnviarProxima.textContent = (currentItemIndex === itemsToCollect.length - 1) ? 'FINALIZAR CHAVE' : 'ENVIAR & Próxima Locação';
          return;
     }
 
     // 2. Atualiza o registro no Supabase
     const isLastItem = currentItemIndex === itemsToCollect.length - 1;
-    // O novo status é 'Coletado', a menos que seja o último item.
-    const newStatus = isLastItem ? 'Finalizado' : 'Coletado';
+
+    // 🎯 AJUSTE: O status individual agora é sempre 'Coletado' até o final.
+    // O status 'Finalizado' será aplicado a TODOS os itens da chave no final da coleta.
+    const newStatus = 'Coletado';
 
     // Obter o caminho da primeira foto para salvar na coluna foto_url
     const firstPhotoUrl = photoPaths.length > 0 ? photoPaths[0] : null;
@@ -276,9 +312,7 @@ async function submitItem() {
         .from('w2w_sobras')
         .update({
             status: newStatus,
-            // CORREÇÃO FINAL: Usa 'foto_url' (coluna existente)
             foto_url: firstPhotoUrl,
-            // CORREÇÃO FINAL: Usa 'data_coleta' (coluna que você criou via SQL)
             data_coleta: new Date().toISOString()
         })
         .eq('id', itemId);
@@ -288,13 +322,15 @@ async function submitItem() {
         alert('Erro ao atualizar o banco de dados. Tente novamente.');
         btnEnviarProxima.disabled = false;
         btnCapturePhoto.disabled = false;
-        btnEnviarProxima.textContent = isLastItem ? 'FINALIZAR COLETA' : 'ENVIAR & Próxima Locação';
+        btnEnviarProxima.textContent = isLastItem ? 'FINALIZAR CHAVE' : 'ENVIAR & Próxima Locação';
         return;
     }
 
     // 3. Sucesso, avança para o próximo
     currentItemIndex++;
     if (isLastItem) {
+        // 🎯 AÇÃO CHAVE: Marca TODOS os itens da chave como Finalizado
+        await markKeyAsFinalized();
         finalizeKey();
     } else {
         loadCurrentItem();
@@ -302,7 +338,7 @@ async function submitItem() {
 }
 
 function finalizeKey() {
-    // Todos os itens foram processados e o último foi marcado como 'Finalizado'.
+    // Todos os itens foram processados e a chave foi marcada como 'Finalizado'.
     switchScreen(screens.success);
 }
 
@@ -325,6 +361,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 2. Listener para o botão Iniciar Coleta
     if (btnIniciarColeta) {
         btnIniciarColeta.addEventListener('click', () => {
+            keyErrorDiv.textContent = ''; // Limpa o erro anterior
             const chave = inputChave.value.trim().toUpperCase();
             if (chave.length === 6 && /^\d+$/.test(chave)) {
                 startCollection(chave);
