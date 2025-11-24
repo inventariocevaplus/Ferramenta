@@ -267,13 +267,16 @@ async function submitItem() {
     // O novo status é 'Coletado', a menos que seja o último item.
     const newStatus = isLastItem ? 'Finalizado' : 'Coletado';
 
+    // Obter o caminho da primeira foto para salvar na coluna foto_url
+    const firstPhotoUrl = photoPaths.length > 0 ? photoPaths[0] : null;
+
     const { error } = await supabaseClient
         .from('w2w_sobras')
         .update({
             status: newStatus,
-            foto_path_1: photoPaths[0] || null,
-            foto_path_2: photoPaths[1] || null,
-            foto_path_3: photoPaths[2] || null,
+            // CORREÇÃO APLICADA: Usa 'foto_url' (que existe) e NÃO 'foto_path_1'
+            foto_url: firstPhotoUrl,
+            // CORREÇÃO APLICADA: Usa 'data_coleta' (que foi criada no banco)
             data_coleta: new Date().toISOString()
             // ATENÇÃO: Se você precisar registrar quem coletou, você precisa de um login aqui!
             // nome_coletor: 'USUÁRIO_MOBILE'
