@@ -337,7 +337,7 @@ async function showKeyDetails(chave, agrupadoStatus) {
 
     const { data, error } = await supabaseClient
         .from('w2w_sobras')
-        .select(`*, foto_path_1, foto_path_2, foto_path_3`) // Inclui caminhos das fotos
+        .select('chave, nome_usuario, ..., foto_url')
         .eq('chave', chave)
         .or(filter)
         .order('created_at', { ascending: true });
