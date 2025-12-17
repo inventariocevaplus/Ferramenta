@@ -3,7 +3,7 @@ body, html {
     background: #f4f7f6;
     margin: 0;
     padding: 0;
-    overflow: hidden; /* Evita scroll na página inteira */
+    overflow: hidden;
 }
 
 .app-container {
@@ -13,6 +13,9 @@ body, html {
     display: flex;
     flex-direction: column;
     background: white;
+    border-top-left-radius: 20px; /* NOVO: Para alinhar com a Dash */
+    border-top-right-radius: 20px; /* NOVO: Para alinhar com a Dash */
+    box-shadow: 0 0 20px rgba(0,0,0,0.05); /* NOVO: Sombra leve nas laterais */
 }
 
 .top-header {
@@ -23,6 +26,8 @@ body, html {
     align-items: center;
     gap: 15px;
     flex-shrink: 0;
+    border-top-left-radius: 20px; /* NOVO */
+    border-top-right-radius: 20px; /* NOVO */
 }
 
 .back-button { background: none; border: none; color: white; font-size: 18px; cursor: pointer; }
@@ -31,7 +36,8 @@ body, html {
 .content-area {
     padding: 15px;
     flex: 1;
-    overflow-y: auto; /* Permite scroll apenas no formulário */
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch; /* NOVO: Rolagem suave no iPhone/Android */
 }
 
 .form-card { background: white; padding: 5px; }
@@ -47,6 +53,13 @@ body, html {
     font-size: 14px;
     background: #fafafa;
     outline: none;
+    transition: 0.3s; /* NOVO */
+}
+
+/* NOVO: Efeito de foco nos campos */
+.field-group input:focus, .field-group select:focus {
+    border-color: #00C853;
+    background: #fff;
 }
 
 .section-label {
@@ -58,12 +71,11 @@ body, html {
     text-transform: uppercase;
 }
 
-/* AJUSTE DO SCROLL DOS ÍCONES */
 .icon-selector {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 10px;
-    max-height: 200px; /* Altura fixa para forçar o scroll */
+    max-height: 200px;
     overflow-y: auto;
     padding: 10px;
     margin-bottom: 20px;
@@ -107,10 +119,16 @@ body, html {
     cursor: pointer;
     margin-top: 10px;
     box-shadow: 0 4px 10px rgba(0,200,83,0.2);
+    transition: 0.3s; /* NOVO */
 }
 
-.btn-save:active { transform: scale(0.98); }
+.btn-save:active { transform: scale(0.98); background: #00a846; }
 
-/* Estilização da barra de scroll dos ícones */
+/* Estilização da barra de scroll */
 .icon-selector::-webkit-scrollbar { width: 4px; }
 .icon-selector::-webkit-scrollbar-thumb { background: #ddd; border-radius: 10px; }
+
+/* NOVO: Estilo base para o Toast caso ele não seja criado via JS */
+#custom-toast {
+    pointer-events: none; /* Garante que o toast não atrapalhe cliques */
+}

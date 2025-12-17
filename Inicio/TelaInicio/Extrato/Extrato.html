@@ -1,10 +1,54 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Extrato de Gastos</title>
+    <link rel="stylesheet" href="extrato.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
+<div class="app-container">
+    <header class="header">
+        <button onclick="window.location.href='../TelaInicio.html'" class="back-btn">
+            <i class="fas fa-chevron-left"></i>
+        </button>
+        <h1>Extrato Geral</h1>
+    </header>
+
+    <div class="filter-section">
+        <select id="filtro-mes"></select>
+        <select id="filtro-ano"></select>
+    </div>
+
+    <div class="content-area">
+        <table class="extrato-table">
+            <thead>
+            <tr>
+                <th>CAT</th>
+                <th>DIA</th>
+                <th>DESCRIÇÃO</th>
+                <th>VALOR</th>
+            </tr>
+            </thead>
+            <tbody id="lista-gastos"></tbody>
+        </table>
+        <div id="msg-vazio" class="hidden">Nenhum gasto encontrado para este período.</div>
+    </div>
+
+    <div class="total-container-wrapper">
+        <div class="total-card">
+            <div class="total-info">
+                <span>Total Acumulado</span>
+                <small id="periodo-texto">No período selecionado</small>
+            </div>
+            <div class="total-value" id="total-extrato">R$ 0,00</div>
+        </div>
+    </div>
+</div>
+
+<script src="extrato.js"></script>
 </body>
 </html>

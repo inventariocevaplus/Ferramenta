@@ -7,6 +7,18 @@ if (typeof window.supabaseClient === 'undefined') {
 
 let iconeSelecionado = "";
 
+// --- INICIALIZAÇÃO: Define Mês e Ano Atuais ---
+document.addEventListener('DOMContentLoaded', () => {
+    const dataAtual = new Date();
+    const meses = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+
+    const comboMes = document.getElementById('cat-mes');
+    const inputAno = document.getElementById('cat-ano');
+
+    if(comboMes) comboMes.value = meses[dataAtual.getMonth()];
+    if(inputAno) inputAno.value = dataAtual.getFullYear();
+});
+
 // Função para exibir a mensagem customizada (Toast)
 function mostrarMensagem(texto, cor = "#00C853") {
     let toast = document.getElementById('custom-toast');
@@ -38,7 +50,6 @@ document.querySelectorAll('.icon-opt').forEach(opt => {
 
         const inputNome = document.getElementById('cat-nome');
         if(inputNome) {
-            // Ajuste: Agora ele sempre troca o nome pelo ícone clicado por último
             inputNome.value = opt.querySelector('span').textContent;
         }
     });

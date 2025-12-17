@@ -9,20 +9,61 @@
     --shadow-hover: 0 8px 20px rgba(0, 0, 0, 0.1);
 }
 
-body, html { margin: 0; padding: 0; height: 100%; font-family: 'Inter', 'Segoe UI', sans-serif; background-color: var(--color-background); overflow: hidden; }
-.app-container { display: flex; flex-direction: column; height: 100vh; max-width: 600px; margin: 0 auto; background: var(--color-background); position: relative; }
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: 'Inter', 'Segoe UI', sans-serif;
+    background-color: var(--color-background);
+    overflow: hidden;
+}
+
+.app-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    max-width: 600px;
+    margin: 0 auto;
+    background: var(--color-background);
+    position: relative;
+}
 
 /* HEADER */
-.top-header { display: flex; justify-content: space-between; align-items: center; padding: 18px 20px; background: var(--color-secondary); color: #fff; z-index: 10; border-bottom-left-radius: 20px; border-bottom-right-radius: 20px; }
+.top-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 20px;
+    background: var(--color-secondary);
+    color: #fff;
+    z-index: 10;
+    border-bottom-left-radius: 20px;
+    border-bottom-right-radius: 20px;
+}
+
 .user-info { display: flex; align-items: center; font-size: 14px; font-weight: 500; }
 .user-icon { color: var(--color-primary); margin-right: 10px; font-size: 20px; }
-.logout-button { background: rgba(255,255,255,0.1); color: #fff; border: none; padding: 8px 15px; border-radius: 10px; cursor: pointer; font-size: 12px; transition: 0.3s; }
+
+.logout-button {
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: 0.3s;
+}
 .logout-button:hover { background: rgba(213, 0, 0, 0.8); }
 
 /* CONTEÚDO */
-.content-area { flex-grow: 1; overflow: hidden; }
+.content-area {
+    flex-grow: 1;
+    overflow: hidden;
+    padding-bottom: 20px;
+}
 
-/* DASHBOARD */
+/* DASHBOARD WRAPPER */
 .dash-wrapper { height: 100%; display: flex; flex-direction: column; }
 
 /* TOPO: GASTOS E SALÁRIO */
@@ -32,42 +73,99 @@ body, html { margin: 0; padding: 0; height: 100%; font-family: 'Inter', 'Segoe U
 .resumo-item h2 { font-size: 24px; margin: 0; color: var(--color-secondary); font-weight: 800; }
 .resumo-item.salario h2 { color: var(--color-primary); }
 
-.chart-area { flex-grow: 1; background: #fdfdfd; border-radius: 20px; border: 1px dashed #e0e0e0; display: flex; align-items: center; justify-content: center; color: #b2bec3; font-size: 13px; }
+.chart-area {
+    flex-grow: 1;
+    background: #fdfdfd;
+    border-radius: 20px;
+    border: 1px dashed #e0e0e0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #b2bec3;
+    font-size: 13px;
+}
 
 /* DIVISOR */
 .dash-middle-bar { position: relative; width: 100%; height: 1px; margin: 10px 0; }
 .dash-middle-bar hr { border: 0; border-top: 1px solid #f0f0f0; margin: 0; }
-.add-cat-float {
-    position: absolute; top: -18px; left: 50%; transform: translateX(-50%);
-    background: #fff; border: none; padding: 8px 22px; border-radius: 25px;
-    font-size: 12px; font-weight: 700; color: var(--color-secondary);
-    cursor: pointer; box-shadow: var(--shadow-soft); display: flex; align-items: center; gap: 8px; transition: 0.3s;
-}
-.add-cat-float:active { transform: translateX(-50%) scale(0.95); box-shadow: none; }
 
-/* GRID INFERIOR - FOCO NOS ÍCONES */
+.add-cat-float {
+    position: absolute;
+    top: -18px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #fff;
+    border: none;
+    padding: 8px 22px;
+    border-radius: 25px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--color-secondary);
+    cursor: pointer;
+    box-shadow: var(--shadow-soft);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: 0.3s;
+    z-index: 5;
+}
+
+/* GRID INFERIOR */
 .dash-bottom-half { height: 55%; padding: 40px 20px 20px; overflow-y: auto; }
 .cat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
 
 .cat-card {
-    width: 65px; height: 65px; background: #fff; border-radius: 18px;
-    display: flex; align-items: center; justify-content: center;
-    box-shadow: var(--shadow-soft); transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    cursor: pointer; border: none; position: relative; overflow: hidden;
+    width: 65px;
+    height: 65px;
+    background: #fff;
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-soft);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    cursor: pointer;
+    border: none;
 }
-
 .cat-card i { font-size: 24px; color: var(--color-secondary); transition: 0.3s; }
 
-/* Efeito de abertura ao clicar */
-.cat-card:active { transform: scale(1.15); box-shadow: var(--shadow-hover); }
-.cat-card::after {
-    content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0, 200, 83, 0.05); opacity: 0; transition: 0.3s;
-}
-.cat-card:hover i { color: var(--color-primary); }
-
 /* BOTTOM NAV */
-.bottom-nav { display: flex; justify-content: space-around; padding: 15px 0; background: #fff; border-top: 1px solid #f1f1f1; }
-.nav-item { text-decoration: none; color: #b2bec3; font-size: 11px; display: flex; flex-direction: column; align-items: center; font-weight: 600; }
+.bottom-nav {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 15px 0 25px 0;
+    background: #fff;
+    border-top: 1px solid #f1f1f1;
+    border-top-left-radius: 25px;
+    border-top-right-radius: 25px;
+    box-shadow: 0 -8px 20px rgba(0,0,0,0.08);
+    margin-top: -30px;
+    position: relative;
+    z-index: 100;
+}
+
+.nav-item {
+    text-decoration: none;
+    color: #b2bec3;
+    font-size: 11px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-weight: 600;
+}
+
 .nav-item.active { color: var(--color-primary); }
-.nav-item i { font-size: 22px; margin-bottom: 5px; }
+.nav-item i { font-size: 22px; margin-bottom: 4px; }
+
+/* --- APLICAÇÃO DA COR VERMELHA APENAS NO ÍCONE --- */
+
+/* Mantém o card exatamente igual (branco), apenas o desenho do ícone muda */
+.cat-grid .cat-card.limite-estourado i {
+    color: #ff5252 !important; /* Vermelho vivo apenas no desenho */
+}
+
+/* Efeito opcional: faz o ícone pulsar levemente quando estourar */
+.cat-grid .cat-card.limite-estourado {
+    box-shadow: 0 4px 15px rgba(255, 82, 82, 0.15); /* Sombra vermelha bem discreta */
+}

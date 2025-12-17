@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalhes da Categoria</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="detalhes.css">
+</head>
+<body>
+<div class="app-container">
+    <header class="top-header">
+        <button onclick="window.location.href='../TelaInicio.html'" class="back-button">
+            <i class="fas fa-arrow-left"></i>
+        </button>
+        <h2 id="titulo-categoria">...</h2>
+        <button id="btn-excluir-cat" class="delete-cat-btn"><i class="fas fa-trash-alt"></i></button>
+    </header>
+
+    <main class="content-area">
+        <div class="kpi-container">
+            <div class="kpi-card">
+                <div class="kpi-header-edit">
+                    <small>LIMITE</small>
+                    <button id="btn-edit-limite" class="edit-limite-btn"><i class="fas fa-cog"></i></button>
+                </div>
+                <div id="container-limite-val">
+                    <h3 id="kpi-limite">R$ 0,00</h3>
+                </div>
+            </div>
+            <div class="kpi-card">
+                <small>GASTO TOTAL</small>
+                <h3 id="kpi-gasto">R$ 0,00</h3>
+            </div>
+        </div>
+
+        <div class="filter-row">
+            <select id="det-mes">
+                <option value="Janeiro">Janeiro</option><option value="Fevereiro">Fevereiro</option>
+                <option value="Março">Março</option><option value="Abril">Abril</option>
+                <option value="Maio">Maio</option><option value="Junho">Junho</option>
+                <option value="Julho">Julho</option><option value="Agosto">Agosto</option>
+                <option value="Setembro">Setembro</option><option value="Outubro">Outubro</option>
+                <option value="Novembro">Novembro</option><option value="Dezembro">Dezembro</option>
+            </select>
+            <select id="det-ano"></select>
+        </div>
+
+        <div class="add-expense-card">
+            <input type="text" id="exp-desc" placeholder="Descrição (opcional)">
+            <div class="row-inputs">
+                <input type="number" id="exp-valor" placeholder="Valor R$">
+                <input type="number" id="exp-dia" placeholder="Dia">
+                <button class="btn-add" id="btn-salvar-gasto"><i class="fas fa-plus"></i></button>
+            </div>
+        </div>
+
+        <div class="history-section">
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>DIA</th>
+                        <th style="text-align: left;">DESCRIÇÃO</th>
+                        <th>VALOR</th>
+                        <th></th>
+                    </tr>
+                    </thead>
+                    <tbody id="lista-gastos"></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+
+<div id="modal-confirm" class="modal">
+    <div class="modal-content">
+        <h3>Excluir Categoria?</h3>
+        <p>Isso apagará todos os dados permanentemente.</p>
+        <div class="modal-btns">
+            <button id="confirm-sim" class="btn-danger">Sim</button>
+            <button id="confirm-nao" class="btn-sec">Não</button>
+        </div>
+    </div>
+</div>
+
+<script src="detalhes.js"></script>
+</body>
+</html>
