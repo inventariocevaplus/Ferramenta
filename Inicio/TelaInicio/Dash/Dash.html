@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - EasyFinance</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="Dash.css">
+</head>
+<body>
+
+<div class="app-container">
+    <section class="dash-upper">
+        <div class="resumo-card">
+            <span class="label">Gastos Planejados</span>
+            <h1 id="total-planejado">R$ 0,00</h1>
+            <div class="mini-stats">
+                <span>Realizado: <b id="total-realizado">R$ 0,00</b></span>
+            </div>
+        </div>
+    </section>
+
+    <div class="divider">
+        <hr>
+        <button class="btn-add-cat" onclick="window.location.href='../categoria/categoria.html'">
+            <i class="fas fa-plus-circle"></i> Categoria
+        </button>
+    </div>
+
+    <section class="dash-lower">
+        <div class="categories-grid" id="grid-categorias">
+            <div class="empty-state">Clique no + para adicionar categorias</div>
+        </div>
+    </section>
+</div>
+
+<script src="Dash.js"></script>
+</body>
+</html>

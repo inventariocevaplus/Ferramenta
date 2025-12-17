@@ -3,79 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Acesso - Ferramenta CEVA</title>
+    <title>EasyFinance - Acesso por Convite</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="Login.css">
 </head>
-<body class="login-body">
+<body class="app-body">
 
 <div id="toast-container"></div>
 
 <div class="login-container">
+    <div class="logo-area">
+        <i class="fas fa-chart-line app-icon"></i>
+        <h1>EasyFinance</h1>
+    </div>
 
-    <div class="logo-placeholder">CEVA Logistics</div>
-
-    <h2 class="login-title" id="form-title">Acesso ao Sistema</h2>
+    <h2 class="login-title" id="form-title">Entrar no App</h2>
 
     <div id="login-area">
         <form id="login-form">
             <div class="input-group">
-                <label for="login-email">Nome de Usuário</label>
-                <input type="text" id="login-email" required>
+                <label for="login-user"><i class="fas fa-user icon-label"></i> Seu Nome</label>
+                <input type="text" id="login-user" required placeholder="Ex: Gabriel Silva">
             </div>
             <div class="input-group">
-                <label for="login-password">Senha</label>
-                <input type="password" id="login-password" required>
+                <label for="login-code"><i class="fas fa-key icon-label"></i> Código de 4 Dígitos</label>
+                <input type="text" id="login-code" maxlength="4" required placeholder="0000">
             </div>
-            <button type="submit" class="auth-button primary-button">Entrar</button>
+            <button type="submit" class="auth-button primary-button">
+                <i class="fas fa-sign-in-alt"></i> Acessar Sistema
+            </button>
         </form>
-        <div class="separator">ou</div>
-        <button id="show-signup-button" class="auth-button secondary-button">Cadastrar</button>
+        <div class="separator">Recebeu um convite?</div>
+        <button onclick="showSignup()" class="auth-button secondary-button">
+            <i class="fas fa-user-plus"></i> Novo Usuário (Primeiro Acesso)
+        </button>
     </div>
 
     <div id="signup-area" style="display:none;">
-        <button id="back-to-login" class="back-button"><i class="fas fa-arrow-left"></i> Voltar ao Login</button>
-
         <form id="signup-form">
+            <p class="description-text">Preencha para validar seu convite.</p>
             <div class="input-group">
-                <label for="signup-username">Nome de Usuário</label>
-                <input type="text" id="signup-username" required>
+                <label for="signup-nome"><i class="fas fa-user icon-label"></i> Seu Nome Completo</label>
+                <input type="text" id="signup-nome" required>
             </div>
             <div class="input-group">
-                <label for="signup-email">E-mail (@cevalogistics.com)</label>
-                <input type="email" id="signup-email" required>
+                <label for="signup-tel"><i class="fas fa-phone icon-label"></i> Telefone</label>
+                <input type="tel" id="signup-tel" required placeholder="(00) 00000-0000">
             </div>
             <div class="input-group">
-                <label for="signup-password">Senha</label>
-                <input type="password" id="signup-password" required>
+                <label for="signup-code"><i class="fas fa-ticket-alt icon-label"></i> Código Recebido</label>
+                <input type="text" id="signup-code" maxlength="4" required placeholder="1234">
             </div>
-            <button type="submit" class="auth-button primary-button">Cadastrar e Solicitar Código</button>
+            <button type="submit" class="auth-button primary-button">
+                <i class="fas fa-check-circle"></i> Validar e Entrar
+            </button>
         </form>
-
-        <div id="code-validation-area" style="display:none; margin-top: 25px;">
-            <p style="color: #021D49; font-weight: bold; margin-bottom: 15px;">
-                <i class="fas fa-key" style="color: #E1261C; margin-right: 5px;"></i>
-                Código solicitado. **Um Master Admin deve inserir seu código no painel Supabase.** Solicite o código e insira abaixo:
-            </p>
-
-            <div class="input-group">
-                <label for="validation-code">Código de Validação</label>
-                <input type="text" id="validation-code" maxlength="6" required>
-            </div>
-
-            <button id="validate-code-button" class="auth-button primary-button">
-                Validar Código e Finalizar Cadastro
-            </button>
-
-            <button id="back-to-signup-fields" class="auth-button secondary-button" style="margin-top: 10px;">
-                Voltar aos Dados de Cadastro
-            </button>
-        </div>
-
+        <button onclick="showLogin()" class="auth-button tertiary-button" style="margin-top: 15px;">
+            <i class="fas fa-arrow-left"></i> Voltar ao Login
+        </button>
     </div>
-
-    <p id="error-message" class="error-message" style="display:none;"></p>
-
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

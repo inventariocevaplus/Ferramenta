@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirmando sua Conta - EasyFinance</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="Login.css">
+</head>
+<body class="app-body">
+
+<div class="login-container">
+    <div class="logo-area">
+        <i class="fas fa-chart-line app-icon"></i>
+        <h1>EasyFinance</h1>
+    </div>
+
+    <h2 class="login-title">Confirmação de Cadastro</h2>
+
+    <div id="confirmation-status" style="text-align: center; padding: 20px;">
+        <i class="fas fa-sync fa-spin" id="status-icon" style="font-size: 40px; color: #3498db;"></i>
+        <p class="description-text" id="status-message" style="margin-top: 20px; font-weight: bold;">
+            Validando seu link e preparando seu acesso...
+        </p>
+        <button id="back-to-login" class="auth-button primary-button" style="display: none; margin-top: 20px;" onclick="window.location.href='Login.html'">
+            Voltar para o Login
+        </button>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+    const SUPABASE_URL = 'https://wzvjgfubiodrjlycuiqa.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind6dmpnZnViaW9kcmpseWN1aXFhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI4NzQwMDYsImV4cCI6MjA3ODQ1MDAwNn0.Dx1B-H93m8FH0NokBhJe8qWyGFHBGD18sEkv5zu_SMQ';
+
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const icon = document.getElementById('status-icon');
+    const message = document.getElementById('status-message');
+    const btn = document.getElementById('back-to-login');
+
+    // Função para criar o perfil no banco de dados
+    async function criarPerfilUsuario(user) {
+        const nomeParaSalvar = user.user_metadata?.user_nome || 'Usuário';
+
+        const { error } = await supabase
+            .from('cadastro_usuarios')
+            .upsert([
+                {
+                    user_id: user.id,
+                    user_nome: nomeParaSalvar,
+                    email_usuario: user.email
+                }
+            ], { onConflict: 'user_id' });
+
+        if (error) {
+            console.error("Erro ao salvar perfil:", error);
+            return false;
+        }
+        return true;
+    }
+
+    // Escuta a confirmação que vem do link do e-mail
+    supabase.auth.onAuthStateChange(async (event, session) => {
+        if (event === 'SIGNED_IN' && session) {
+            const sucesso = await criarPerfilUsuario(session.user);
+
+            if (sucesso) {
+                icon.className = "fas fa-check-circle";
+                icon.style.color = "#2ecc71";
+                message.textContent = "Conta confirmada com sucesso! Redirecionando...";
+
+                setTimeout(() => {
+                    window.location.href = 'Login.html';
+                }, 3000);
+            } else {
+                icon.className = "fas fa-exclamation-circle";
+                icon.style.color = "#f1c40f";
+                message.textContent = "Conta confirmada, mas houve um erro ao criar seu perfil. Tente fazer login.";
+                btn.style.display = "block";
+            }
+        }
+    });
+
+    // Fallback caso o link esteja quebrado ou expire
+    setTimeout(async () => {
+        const { data } = await supabase.auth.getSession();
+        if (!data.session) {
+            icon.className = "fas fa-times-circle";
+            icon.style.color = "#e74c3c";
+            message.textContent = "O link de confirmação expirou ou é inválido.";
+            btn.style.display = "block";
+        }
+    }, 8000);
+</script>
+</body>
+</html>

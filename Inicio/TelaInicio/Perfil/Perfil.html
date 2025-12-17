@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perfil - EasyFinance</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="Perfil.css">
+</head>
+<body>
+
+<div id="toast-container"></div>
+
+<div class="app-container">
+    <header class="top-header">
+        <div class="header-left">
+            <button onclick="window.location.href='../TelaInicio.html'" class="back-button">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            <div class="user-info">
+                <i class="fas fa-user-circle user-icon"></i>
+                <span id="logged-user-display">Carregando...</span>
+            </div>
+        </div>
+        <h2 class="page-title">Meu Perfil</h2>
+    </header>
+
+    <main class="content-area">
+        <div class="profile-card">
+            <div class="field-group">
+                <label>Nome Completo</label>
+                <input type="text" id="p-nome" readonly>
+            </div>
+
+            <div class="field-group">
+                <label>E-mail</label>
+                <div class="input-with-button">
+                    <input type="email" id="p-email" placeholder="seuemail@exemplo.com">
+                    <button class="btn-inline" onclick="salvarCampo('email')">Atualizar</button>
+                </div>
+            </div>
+
+            <div class="field-group">
+                <label>Telefone</label>
+                <input type="text" id="p-tel" readonly>
+            </div>
+
+            <div class="field-group">
+                <label>Meu Código de Acesso</label>
+                <div class="input-with-icon">
+                    <input type="password" id="p-codigo" readonly>
+                    <i class="fas fa-eye" id="toggle-eye" onclick="toggleCodigo()"></i>
+                </div>
+            </div>
+
+            <div class="field-group">
+                <label>Amigos Indicados (Ativos)</label>
+                <div class="info-badge" id="p-indicados">0</div>
+            </div>
+
+            <hr>
+
+            <div class="field-group">
+                <label>Salário Base (R$)</label>
+                <input type="number" id="p-salario" step="0.01" placeholder="0.00">
+            </div>
+
+            <button class="btn-save" onclick="salvarCampo('salario')">
+                <i class="fas fa-save"></i> Salvar Alterações
+            </button>
+        </div>
+    </main>
+</div>
+
+<script src="Perfil.js"></script>
+</body>
+</html>

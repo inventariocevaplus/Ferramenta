@@ -1,0 +1,72 @@
+:root {
+    --color-primary: #00C853;
+    --color-secondary: #021D49;
+    --color-bg: #f4f7f6;
+    --app-max-width: 480px;
+}
+
+body { font-family: 'Segoe UI', sans-serif; background: #e0e0e0; margin: 0; display: flex; justify-content: center; }
+
+.app-container {
+    width: 100%; max-width: var(--app-max-width); height: 100vh;
+    background: var(--color-bg); display: flex; flex-direction: column;
+}
+
+/* Metade Superior */
+.dash-upper {
+    height: 40%; display: flex; align-items: center; justify-content: center; padding: 20px;
+}
+
+.resumo-card {
+    text-align: center; color: var(--color-secondary);
+}
+
+.resumo-card .label { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #888; }
+.resumo-card h1 { font-size: 38px; margin: 10px 0; font-weight: 800; }
+
+/* Divisor */
+.divider { position: relative; width: 100%; text-align: center; }
+.divider hr { border: 0; border-top: 1px solid #ddd; width: 90%; }
+
+.btn-add-cat {
+    position: absolute; top: -15px; left: 50%; transform: translateX(-50%);
+    background: white; border: 1px solid #ddd; padding: 5px 15px; border-radius: 20px;
+    font-size: 12px; font-weight: bold; color: var(--color-secondary); cursor: pointer;
+    display: flex; align-items: center; gap: 5px;
+}
+
+/* Metade Inferior */
+.dash-lower {
+    height: 60%; padding: 30px 20px;
+}
+
+.categories-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr); /* 4 colunas */
+    grid-template-rows: repeat(2, 1fr);    /* 2 linhas */
+    gap: 15px;
+}
+
+.category-icon-card {
+    display: flex; flex-direction: column; align-items: center;
+    padding: 10px 5px; border-radius: 15px; transition: 0.3s;
+}
+
+.icon-circle {
+    width: 50px; height: 50px; background: white; border-radius: 15px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 8px;
+}
+
+.icon-circle i { font-size: 20px; color: var(--color-secondary); }
+
+.cat-name { font-size: 10px; font-weight: bold; color: #555; text-align: center; }
+.cat-value { font-size: 9px; color: #aaa; margin-top: 2px; }
+
+/* Cor vermelha bem suave para quando passar do limite */
+.warning-bg {
+    background-color: rgba(255, 82, 82, 0.08); /* Quase imperceptível */
+}
+.warning-bg .icon-circle i { color: #ff5252; }
+
+.empty-state { grid-column: span 4; text-align: center; color: #ccc; font-size: 12px; margin-top: 20px; }

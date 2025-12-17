@@ -1,0 +1,77 @@
+:root {
+    --color-primary: #00C853;
+    --color-secondary: #021D49;
+    --color-bg: #f4f7f6;
+    --app-max-width: 480px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background-color: #f0f2f5;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+}
+
+.app-container {
+    width: 100%;
+    max-width: var(--app-max-width);
+    min-height: 100vh;
+    background-color: var(--color-bg);
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+}
+
+.top-header {
+    background-color: var(--color-secondary);
+    color: white;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.header-left { display: flex; align-items: center; gap: 15px; }
+.back-button { background: none; border: none; color: white; font-size: 20px; cursor: pointer; }
+.user-info { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+.page-title { font-size: 16px; margin: 0; }
+
+.content-area {
+    padding: 20px;
+    width: 100%;
+}
+
+.generator-section {
+    background: white; padding: 20px; border-radius: 15px;
+    text-align: center; margin-bottom: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.codigo-box {
+    font-size: 35px; font-weight: bold; color: var(--color-primary);
+    margin: 15px 0; padding: 10px; border: 2px dashed #ddd; border-radius: 10px;
+}
+
+.btn-primary {
+    background-color: var(--color-primary); color: white; border: none;
+    width: 100%; padding: 15px; border-radius: 10px; font-weight: bold; cursor: pointer;
+}
+
+.btn-disabled { background-color: #ccc; cursor: not-allowed; }
+
+.timer-text { color: #888; font-size: 13px; margin-top: 10px; }
+.timer-hidden { display: none; }
+
+.table-container { background: white; border-radius: 15px; padding: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+
+.indicados-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+.indicados-table th { text-align: left; padding: 12px; border-bottom: 2px solid #f0f0f0; color: #555; }
+.indicados-table td { padding: 12px; border-bottom: 1px solid #f9f9f9; font-size: 14px; }
+
+.status-badge {
+    background-color: #e8f5e9; color: #2e7d32;
+    padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold;
+}

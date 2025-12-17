@@ -1,62 +1,81 @@
 /*
  * Arquivo: Login.css
- * Layout: Corporativo CEVA Logistics
- * Cores: Azul Escuro (#021D49) e Vermelho (#E1261C)
+ * Layout: App de Controle Financeiro Pessoal (EasyFinance)
  */
 
+:root {
+    --color-primary: #00C853; /* Verde vibrante para ação */
+    --color-secondary: #021D49; /* Azul escuro para contraste */
+    --color-background: #f4f7f6; /* Fundo claro e suave */
+    --color-text: #424242; /* Cinza escuro para leitura */
+    --color-error: #D50000; /* Vermelho para erro */
+    --color-link: #007bff; /* Azul claro para links */
+}
+
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     margin: 0;
     padding: 0;
-    /* Fundo Azul CEVA Escuro: Imagem ou Degradê Corporativo */
-    background: #021D49;
+    background-color: var(--color-background);
     display: flex;
-    justify-content: center; /* Centraliza horizontalmente */
-    align-items: center; /* Centraliza verticalmente */
+    justify-content: center;
+    align-items: center;
     min-height: 100vh;
-    overflow: hidden; /* Evita barras de rolagem desnecessárias */
 }
 
 /* ------------------------------------------------------------------
-   1. CONTAINER PRINCIPAL (Cartão de Login)
+   1. CONTAINER PRINCIPAL (Cartão de Login - Estilo App)
    ------------------------------------------------------------------ */
 
 .login-container {
-    background-color: #FFFFFF; /* Fundo branco para o formulário */
-    padding: 45px 50px;
-    border-radius: 12px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4); /* Sombra elegante */
+    background-color: #FFFFFF;
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
     width: 100%;
-    max-width: 380px; /* Largura ideal para um formulário de login */
+    max-width: 360px;
     text-align: center;
-    transition: transform 0.3s ease-in-out;
-}
-
-.login-container:hover {
-    transform: translateY(-2px); /* Efeito suave ao passar o mouse */
 }
 
 /* ------------------------------------------------------------------
-   2. TÍTULOS E LOGO
+   2. LOGO E TÍTULOS
    ------------------------------------------------------------------ */
 
-.logo-placeholder {
-    /* Simulação de um espaço para o logo */
-    font-size: 28px;
-    font-weight: bold;
-    color: #E1261C; /* Vermelho CEVA */
-    margin-bottom: 30px;
-    letter-spacing: 1px;
-}
-
-.login-title {
-    color: #021D49; /* Azul escuro CEVA */
-    font-size: 24px;
+.logo-area {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     margin-bottom: 25px;
 }
 
+.app-icon {
+    font-size: 36px;
+    color: var(--color-primary);
+    margin-right: 10px;
+}
+
+.logo-area h1 {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--color-secondary);
+    margin: 0;
+}
+
+.login-title {
+    color: var(--color-text);
+    font-size: 20px;
+    margin-bottom: 20px;
+    font-weight: 400;
+}
+
+.description-text {
+    font-size: 14px;
+    color: #888;
+    margin-bottom: 20px;
+}
+
 /* ------------------------------------------------------------------
-   3. CAMPOS DE INPUT
+   3. CAMPOS DE INPUT E CHECKBOX
    ------------------------------------------------------------------ */
 
 .input-group {
@@ -67,25 +86,55 @@ body {
 .input-group label {
     display: block;
     margin-bottom: 5px;
-    font-size: 14px;
-    font-weight: bold;
-    color: #021D49;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.icon-label {
+    margin-right: 8px;
+    color: var(--color-primary);
 }
 
 .input-group input {
     width: 100%;
-    padding: 12px 10px;
-    border: 1px solid #ccc;
-    border-radius: 6px; /* Borda levemente arredondada */
+    padding: 15px 15px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
     box-sizing: border-box;
     font-size: 16px;
     transition: border-color 0.3s, box-shadow 0.3s;
 }
 
 .input-group input:focus {
-    border-color: #E1261C; /* Borda vermelha no foco */
-    box-shadow: 0 0 0 3px rgba(225, 38, 28, 0.2); /* Sombra suave no foco */
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(0, 200, 83, 0.15);
     outline: none;
+}
+
+/* Grupo de Checkbox e Link de Senha */
+.checkbox-group {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    font-size: 14px;
+}
+
+.checkbox-group label {
+    font-weight: 400;
+    color: var(--color-text);
+    margin-left: 5px;
+}
+
+.forgot-password {
+    color: var(--color-link);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.forgot-password:hover {
+    text-decoration: underline;
 }
 
 /* ------------------------------------------------------------------
@@ -94,40 +143,58 @@ body {
 
 .auth-button {
     border: none;
-    padding: 14px;
+    padding: 15px;
     width: 100%;
-    border-radius: 6px;
+    border-radius: 10px;
     cursor: pointer;
-    font-size: 17px;
+    font-size: 16px;
     font-weight: bold;
     transition: background-color 0.3s, opacity 0.3s;
-    margin-top: 10px;
-    text-transform: uppercase;
+    margin-top: 5px;
+    text-transform: capitalize;
 }
 
 .primary-button {
-    background-color: #E1261C; /* Vermelho CEVA: Ação principal */
+    background-color: var(--color-primary);
     color: #FFFFFF;
 }
 
-.primary-button:hover {
-    background-color: #c41e17;
+.primary-button:hover:not(:disabled) {
+    background-color: #00a042;
 }
 
 .secondary-button {
-    background-color: #021D49; /* Azul Escuro CEVA: Ação secundária */
+    background-color: var(--color-secondary);
     color: #FFFFFF;
 }
 
-.secondary-button:hover {
+.secondary-button:hover:not(:disabled) {
     background-color: #01142c;
+}
+
+.tertiary-button {
+    background: none;
+    border: 1px solid #ccc;
+    color: var(--color-text);
+    padding: 10px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.tertiary-button:hover:not(:disabled) {
+    background-color: #f0f0f0;
+}
+
+.auth-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 
 .separator {
     text-align: center;
-    margin: 25px 0;
+    margin: 20px 0;
     font-size: 14px;
-    color: #888;
+    color: #aaa;
     position: relative;
 }
 
@@ -136,90 +203,48 @@ body {
     content: '';
     position: absolute;
     top: 50%;
-    width: 40%;
+    width: 35%;
     height: 1px;
-    background: #ccc;
+    background: #e0e0e0;
 }
 
-.separator::before {
-    left: 0;
-}
+.separator::before { left: 0; }
+.separator::after { right: 0; }
 
-.separator::after {
-    right: 0;
-}
-
-/* Botão de Voltar para Cadastro */
-.back-button {
-    background: none;
-    border: none;
-    color: #021D49;
-    padding: 0;
-    margin-bottom: 25px;
-    cursor: pointer;
-    font-size: 14px;
-    display: flex;
-    align-items: center;
-    font-weight: bold;
-}
-
-.back-button i {
-    margin-right: 5px;
-}
 
 /* ------------------------------------------------------------------
-   5. TOAST NOTIFICATIONS (MENSAGENS POP-UP)
+   5. TOAST NOTIFICATIONS
    ------------------------------------------------------------------ */
 
 #toast-container {
-    /* Fixa o container no canto superior direito */
     position: fixed;
     top: 20px;
     right: 20px;
-    z-index: 10000; /* Garante que fique acima de tudo */
+    z-index: 10000;
 }
 
 .toast-message {
-    min-width: 250px;
+    min-width: 280px;
     padding: 15px 25px;
-    margin-bottom: 10px; /* Adiciona espaço entre mensagens se houver mais de uma */
-    border-radius: 8px;
+    margin-bottom: 10px;
+    border-radius: 10px;
     color: #FFFFFF;
     font-weight: bold;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-
-    z-index: 1000;
-    opacity: 0; /* Inicialmente invisível */
+    opacity: 0;
     transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
-    transform: translateY(-50px); /* Inicialmente fora da tela (Movimento de cima para baixo) */
+    transform: translateY(-50px);
 }
 
-/* Estilos específicos */
 .toast-success {
-    background-color: #4CAF50; /* Verde claro para sucesso */
-    border-left: 5px solid #388E3C;
+    background-color: var(--color-primary);
 }
 
 .toast-error {
-    background-color: #E1261C; /* Vermelho CEVA para erro */
-    border-left: 5px solid #c41e17;
+    background-color: var(--color-error);
 }
 
-/* Para mensagens informativas (Deslogando, Redirecionando) */
-.toast-info {
-    background-color: #021D49; /* Azul Escuro CEVA */
-    border-left: 5px solid #01142c;
-}
-
-/* Classe para mostrar o toast */
 .toast-message.show {
     opacity: 1;
     transform: translateY(0);
-}
-
-.error-message {
-    color: #E1261C;
-    margin-top: 15px;
-    font-weight: bold;
-    font-size: 14px;
 }

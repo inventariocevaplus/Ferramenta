@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Indicações - EasyFinance</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="Indicacao.css">
+</head>
+<body>
+
+<div class="app-container">
+  <header class="top-header">
+    <div class="header-left">
+      <button onclick="window.location.href='../TelaInicio.html'" class="back-button">
+        <i class="fas fa-arrow-left"></i>
+      </button>
+      <div class="user-info">
+        <i class="fas fa-user-circle user-icon"></i>
+        <span id="logged-user-display">Carregando...</span>
+      </div>
+    </div>
+    <h2 class="page-title">Indicar Amigos</h2>
+  </header>
+
+  <main class="content-area">
+    <div class="generator-section">
+      <p>Gere um código e convide seus amigos</p>
+      <div id="display-codigo" class="codigo-box">----</div>
+      <button id="btn-gerar" class="btn-primary" onclick="gerarNovoCodigo()">
+        Gerar Novo Código
+      </button>
+      <p id="timer-box" class="timer-text timer-hidden">
+        Aguarde <span id="segundos">60</span>s para o próximo.
+      </p>
+    </div>
+
+    <div class="table-container">
+      <h3>Indicações Ativas</h3>
+      <table class="indicados-table">
+        <thead>
+        <tr>
+          <th>Usuário</th>
+          <th>Status</th>
+        </tr>
+        </thead>
+        <tbody id="tabela-corpo">
+        </tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<script src="Indicacao.js"></script>
+</body>
+</html>

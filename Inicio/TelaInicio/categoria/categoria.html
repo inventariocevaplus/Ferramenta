@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Configurar Categoria</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="categoria.css">
+</head>
+<body>
+<div id="toast-container"></div>
+<div class="app-container">
+  <header class="top-header">
+    <button onclick="window.location.href='../TelaInicio.html'" class="back-button">
+      <i class="fas fa-arrow-left"></i>
+    </button>
+    <h2 class="page-title">Configurar Categoria</h2>
+  </header>
+
+  <main class="content-area">
+    <div class="form-card">
+      <div class="row">
+        <div class="field-group">
+          <label>Mês</label>
+          <select id="cat-mes">
+            <option value="Janeiro">Janeiro</option><option value="Fevereiro">Fevereiro</option>
+            <option value="Março">Março</option><option value="Abril">Abril</option>
+            <option value="Maio">Maio</option><option value="Junho">Junho</option>
+            <option value="Julho">Julho</option><option value="Agosto">Agosto</option>
+            <option value="Setembro">Setembro</option><option value="Outubro">Outubro</option>
+            <option value="Novembro">Novembro</option><option value="Dezembro">Dezembro</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label>Ano</label>
+          <input type="number" id="cat-ano" value="2025">
+        </div>
+      </div>
+
+      <label class="section-label">Escolha um Ícone</label>
+      <div class="icon-selector" id="icon-grid">
+        <div class="icon-opt" data-icon="fa-utensils"><i class="fas fa-utensils"></i><span>Comida</span></div>
+        <div class="icon-opt" data-icon="fa-map-marked-alt"><i class="fas fa-map-marked-alt"></i><span>Passeio</span></div>
+        <div class="icon-opt" data-icon="fa-gamepad"><i class="fas fa-gamepad"></i><span>Jogos</span></div>
+        <div class="icon-opt" data-icon="fa-music"><i class="fas fa-music"></i><span>Música</span></div>
+        <div class="icon-opt" data-icon="fa-plane"><i class="fas fa-plane"></i><span>Viagem</span></div>
+        <div class="icon-opt" data-icon="fa-file-invoice-dollar"><i class="fas fa-file-invoice-dollar"></i><span>Contas</span></div>
+        <div class="icon-opt" data-icon="fa-tools"><i class="fas fa-tools"></i><span>Manutenção</span></div>
+        <div class="icon-opt" data-icon="fa-robot"><i class="fas fa-robot"></i><span>Brinquedos</span></div>
+        <div class="icon-opt" data-icon="fa-heartbeat"><i class="fas fa-heartbeat"></i><span>Saúde</span></div>
+        <div class="icon-opt" data-icon="fa-car"><i class="fas fa-car"></i><span>Transporte</span></div>
+        <div class="icon-opt" data-icon="fa-graduation-cap"><i class="fas fa-graduation-cap"></i><span>Educação</span></div>
+        <div class="icon-opt" data-icon="fa-shopping-cart"><i class="fas fa-shopping-cart"></i><span>Compras</span></div>
+        <div class="icon-opt" data-icon="fa-dumbbell"><i class="fas fa-dumbbell"></i><span>Academia</span></div>
+        <div class="icon-opt" data-icon="fa-piggy-bank"><i class="fas fa-piggy-bank"></i><span>Investimentos</span></div>
+        <div class="icon-opt" data-icon="fa-cloud-sun"><i class="fas fa-cloud-sun"></i><span>Sonhos</span></div>
+        <div class="icon-opt" data-icon="fa-vault"><i class="fas fa-vault"></i><span>Reserva</span></div>
+        <div class="icon-opt" data-icon="fa-paw"><i class="fas fa-paw"></i><span>Animais</span></div>
+        <div class="icon-opt" data-icon="fa-home"><i class="fas fa-home"></i><span>Casa</span></div>
+        <div class="icon-opt" data-icon="fa-running"><i class="fas fa-running"></i><span>Esporte</span></div>
+        <div class="icon-opt" data-icon="fa-tshirt"><i class="fas fa-tshirt"></i><span>Roupas</span></div>
+      </div>
+
+      <div class="field-group">
+        <label>Nome da Categoria</label>
+        <input type="text" id="cat-nome" placeholder="Ex: Supermercado">
+      </div>
+
+      <div class="field-group">
+        <label>Limite Mensal (R$)</label>
+        <input type="number" id="cat-limite" placeholder="0.00">
+      </div>
+
+      <button class="btn-save" onclick="salvarCategoria()">Salvar Categoria</button>
+    </div>
+  </main>
+</div>
+<script src="categoria.js"></script>
+</body>
+</html>
