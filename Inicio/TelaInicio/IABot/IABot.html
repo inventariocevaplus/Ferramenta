@@ -1,10 +1,57 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Easy IA - Assistente</title>
+    <link rel="stylesheet" href="IABot.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
+<div class="app-container">
+    <header class="header">
+        <button onclick="window.location.href='../TelaInicio.html'" class="back-btn">
+            <i class="fas fa-chevron-left"></i>
+        </button>
+        <div class="bot-info">
+            <img src="https://cdn-icons-png.flaticon.com/512/4712/4712035.png" alt="Bot">
+            <div>
+                <h1>Easy IA</h1>
+                <small>Online agora</small>
+            </div>
+        </div>
+        <button class="settings-btn" id="toggle-config"><i class="fas fa-cog"></i></button>
+    </header>
 
+    <div id="config-panel" class="config-panel hidden">
+        <h3>Configurações de Segurança</h3>
+        <div class="input-group">
+            <label>Código de Acesso (4 dígitos)</label>
+            <input type="password" id="cfg-codigo" maxlength="4" placeholder="8288">
+        </div>
+        <div class="input-group">
+            <label>Máximo de Erros</label>
+            <input type="number" id="cfg-erros" value="3">
+        </div>
+        <button class="btn-save-cfg" onclick="salvarConfiguracoes()">Salvar Alterações</button>
+    </div>
+
+    <div class="chat-messages" id="chat-box">
+        <div class="msg bot">
+            Olá Gabriel! Sou a **Easy IA**. Para lançar um gasto, me diga seu código e os detalhes.
+        </div>
+    </div>
+
+    <div class="chat-input-area">
+        <div class="recording-indicator" id="rec-status">Gravando áudio...</div>
+        <button class="btn-mic" id="btn-mic">
+            <i class="fas fa-microphone"></i>
+        </button>
+        <p>Pressione para falar seu gasto</p>
+    </div>
+</div>
+
+<script src="IABot.js"></script>
 </body>
 </html>
