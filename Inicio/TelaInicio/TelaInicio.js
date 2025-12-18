@@ -10,8 +10,18 @@ if (typeof window.supabaseClient === 'undefined') {
  */
 async function loadContent(path) {
     const contentArea = document.getElementById('content-area');
+    const filtrosHeader = document.getElementById('filtros-header-container');
+
+    // Limpa filtros da barra superior por padrão ao trocar de aba
+    filtrosHeader.innerHTML = "";
 
     if (path === 'Dash') {
+        // Injeta Filtros Customizados com estilo de alta visibilidade
+        filtrosHeader.innerHTML = `
+            <select id="dash-filtro-mes" style="background: rgba(255,255,255,0.25); border: 1px solid rgba(255,255,255,0.3); padding: 5px 8px; border-radius: 8px; font-size: 11px; color: #ffffff !important; font-weight: bold; outline: none; cursor: pointer; appearance: none; -webkit-appearance: none;"></select>
+            <select id="dash-filtro-ano" style="background: rgba(255,255,255,0.25); border: 1px solid rgba(255,255,255,0.3); padding: 5px 8px; border-radius: 8px; font-size: 11px; color: #ffffff !important; font-weight: bold; outline: none; cursor: pointer; appearance: none; -webkit-appearance: none;"></select>
+        `;
+
         contentArea.innerHTML = `
             <div class="dash-wrapper">
                 <div class="dash-top-half">
@@ -26,9 +36,9 @@ async function loadContent(path) {
                         </div>
                     </div>
 
-                    <div style="padding: 10px 20px; text-align: center;">
+                    <div style="padding: 10px 0; text-align: center;">
                         <button onclick="window.location.href='Indicacao/Indicacao.html'"
-                                style="width: 100%; background: #6c5ce7; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 10px rgba(108, 92, 231, 0.3);">
+                                style="width: 100%; background: #6c5ce7; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
                             <i class="fas fa-gift"></i> INDICAR AMIGO
                         </button>
                     </div>
@@ -50,13 +60,13 @@ async function loadContent(path) {
                 </div>
             </div>`;
 
-        // Carrega os dados da Dashboard (Dash.js)
+        // Carrega o script da Dashboard com carimbo de tempo para evitar cache
         const script = document.createElement('script');
         script.src = `Dash/Dash.js?v=${new Date().getTime()}`;
         document.body.appendChild(script);
 
     } else {
-        contentArea.innerHTML = `<div style="padding:40px; text-align:center;"><h2>${path}</h2></div>`;
+        contentArea.innerHTML = `<div style="padding:40px; text-align:center; color:#636e72;"><h2>${path}</h2><p>Página em desenvolvimento.</p></div>`;
     }
 }
 
@@ -73,13 +83,16 @@ document.addEventListener('DOMContentLoaded', () => {
         userDisplay.textContent = `Olá, ${session.user_nome}!`;
     }
 
+    // Inicia na Dash
     loadContent('Dash');
 
-    // Botão Sair
+    // Botão Sair - Limpa sessão e filtros salvos
     const logoutBtn = document.getElementById('logout-button');
     if (logoutBtn) {
         logoutBtn.onclick = () => {
             localStorage.removeItem('user_session');
+            localStorage.removeItem('filtro_mes');
+            localStorage.removeItem('filtro_ano');
             window.location.href = '../Login/Login.html';
         };
     }
@@ -90,8 +103,14 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             const p = item.getAttribute('data-path');
 
+            // Redirecionamentos de pastas (Respeitando Case-Sensitive para celular)
             if(p === 'Perfil' || p === 'IABot') {
                 window.location.href = `${p}/${p}.html`;
+                return;
+            }
+
+            if(p === 'Indicacao') {
+                window.location.href = `Indicacao/Indicacao.html`;
                 return;
             }
 
@@ -100,6 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
+            // Ativa visualmente o ícone na barra inferior
             document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
             item.classList.add('active');
 
