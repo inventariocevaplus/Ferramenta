@@ -22,7 +22,7 @@
         <div class="kpi-container">
             <div class="kpi-card">
                 <div class="kpi-header-edit">
-                    <small>LIMITE</small>
+                    <small id="label-limite">LIMITE</small>
                     <button id="btn-edit-limite" class="edit-limite-btn"><i class="fas fa-cog"></i></button>
                 </div>
                 <div id="container-limite-val">
@@ -30,7 +30,7 @@
                 </div>
             </div>
             <div class="kpi-card">
-                <small>GASTO TOTAL</small>
+                <small id="label-gasto">GASTO TOTAL</small>
                 <h3 id="kpi-gasto">R$ 0,00</h3>
             </div>
         </div>
@@ -48,7 +48,7 @@
         </div>
 
         <div class="add-expense-card">
-            <input type="text" id="exp-desc" placeholder="Descrição (opcional)">
+            <input type="text" id="exp-desc" placeholder="Descrição (ex: Bônus, Vale...)">
             <div class="row-inputs">
                 <input type="number" id="exp-valor" placeholder="Valor R$">
                 <input type="number" id="exp-dia" placeholder="Dia">

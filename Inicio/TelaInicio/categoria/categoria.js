@@ -63,10 +63,16 @@ async function salvarCategoria() {
     const mes = document.getElementById('cat-mes').value;
     const ano = document.getElementById('cat-ano').value;
     const nome = document.getElementById('cat-nome').value.trim();
-    const limite = document.getElementById('cat-limite').value;
+    let limiteInput = document.getElementById('cat-limite').value;
 
-    if(!iconeSelecionado || !nome || !limite) {
-        mostrarMensagem("Preencha todos os campos!", "#D50000");
+    // --- LÓGICA ESPECIAL PARA SALÁRIO ---
+    const eSalario = nome.toLowerCase() === "salário" || nome.toLowerCase() === "salario";
+
+    // Se for salário, o limite é 0. Se não, valida se preencheu o limite.
+    let limiteFinal = eSalario ? 0 : parseFloat(limiteInput);
+
+    if(!iconeSelecionado || !nome || (!eSalario && isNaN(limiteFinal))) {
+        mostrarMensagem("Preencha todos os campos corretamente!", "#D50000");
         return;
     }
 
@@ -93,19 +99,21 @@ async function salvarCategoria() {
                 ano: parseInt(ano),
                 icone: iconeSelecionado,
                 nome_categoria: nome,
-                limite_planejado: parseFloat(limite),
+                limite_planejado: limiteFinal,
                 gasto_atual: 0
             }]);
 
         if(!error) {
-            mostrarMensagem("Categoria salva com sucesso!");
+            mostrarMensagem(eSalario ? "Categoria de Salário configurada!" : "Categoria salva com sucesso!");
             setTimeout(() => {
                 window.location.href = '../TelaInicio.html';
             }, 1200);
         } else {
-            mostrarMensagem("Erro ao salvar!", "#D50000");
+            console.error("Erro Supabase:", error);
+            mostrarMensagem("Erro ao salvar no banco!", "#D50000");
         }
     } catch (err) {
+        console.error("Erro Geral:", err);
         mostrarMensagem("Erro de conexão", "#D50000");
     }
 }

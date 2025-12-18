@@ -16,9 +16,8 @@ async function carregarDadosDash() {
             let opt = document.createElement('option');
             opt.value = m;
             opt.innerText = m;
-            opt.style.color = "#333"; // Garante que o texto da lista apareça em preto
+            opt.style.color = "#333";
 
-            // Define o selecionado: Prioridade para o cache, se não tiver, usa o mês atual
             if (mesSalvo) {
                 if (m === mesSalvo) opt.selected = true;
             } else if (i === dataAtual.getMonth()) {
@@ -33,7 +32,6 @@ async function carregarDadosDash() {
             opt.innerText = i;
             opt.style.color = "#333";
 
-            // Define o selecionado: Cache ou ano atual
             if (anoSalvo) {
                 if (i.toString() === anoSalvo) opt.selected = true;
             } else if (i === dataAtual.getFullYear()) {
@@ -42,7 +40,6 @@ async function carregarDadosDash() {
             selectAno.appendChild(opt);
         }
 
-        // Evento: Quando o usuário mudar o filtro, SALVA no cache e recarrega
         selectMes.onchange = () => {
             localStorage.setItem('dash_mes_cache', selectMes.value);
             carregarDadosDash();
@@ -53,7 +50,6 @@ async function carregarDadosDash() {
         };
     }
 
-    // Pega os valores atuais dos filtros para a busca no Supabase
     const mesSelecionado = selectMes.value;
     const anoSelecionado = parseInt(selectAno.value);
 
@@ -67,42 +63,63 @@ async function carregarDadosDash() {
     if (!grid) return;
     grid.innerHTML = "";
 
-    let valorTotalGeral = 0;
+    let valorTotalGastos = 0;
+    let valorSalarioMes = 0;
 
     if (categorias && categorias.length > 0) {
         for (const cat of categorias) {
-            // Busca gastos baseados no MÊS e ANO selecionados nos filtros
-            const { data: gastos } = await window.supabaseClient
+            // Busca gastos baseados no MÊS e ANO selecionados
+            const { data: registros } = await window.supabaseClient
                 .from('gastos')
                 .select('valor')
                 .eq('categoria_id', cat.id)
                 .eq('mes', mesSelecionado)
                 .eq('ano', anoSelecionado);
 
-            const somaGastoReal = gastos ? gastos.reduce((acc, g) => acc + g.valor, 0) : 0;
-            valorTotalGeral += somaGastoReal;
+            const somaRegistro = registros ? registros.reduce((acc, g) => acc + g.valor, 0) : 0;
 
-            const limite = parseFloat(cat.limite_planejado) || 0;
-            const ultrapassou = somaGastoReal > limite;
+            // SEPARA SALÁRIO DE GASTOS
+            if (cat.nome_categoria.toLowerCase() === 'salario') {
+                valorSalarioMes = somaRegistro;
+                // Não renderiza o ícone de Salário no Grid de gastos
+            } else {
+                valorTotalGastos += somaRegistro;
 
-            // Renderiza o Card da categoria
-            grid.innerHTML += `
-                <div class="cat-card ${ultrapassou ? 'limite-estourado' : ''}"
-                     onclick="window.location.href='categoria/detalhes.html?id=${cat.id}'">
-                    <i class="fas ${cat.icone}"></i>
-                </div>
-            `;
+                const limite = parseFloat(cat.limite_planejado) || 0;
+                const ultrapassou = somaRegistro > limite;
+
+                // Renderiza o Card da categoria (apenas gastos)
+                grid.innerHTML += `
+                    <div class="cat-card ${ultrapassou ? 'limite-estourado' : ''}"
+                         onclick="window.location.href='categoria/detalhes.html?id=${cat.id}'">
+                        <i class="fas ${cat.icone}"></i>
+                    </div>
+                `;
+            }
         }
     } else {
         grid.innerHTML = `<p style="grid-column: span 4; font-size: 12px; color: #b2bec3; text-align: center; padding-top: 20px;">Toque no + para adicionar categorias</p>`;
     }
 
-    // Atualiza o Display de Gasto Total na tela
+    // 3. Atualizar DISPLAYS de valores
     const totalElem = document.getElementById('total-gasto');
     if (totalElem) {
-        totalElem.innerText = `R$ ${valorTotalGeral.toLocaleString('pt-BR', {minimumFractionDigits:2})}`;
+        totalElem.innerText = `R$ ${valorTotalGastos.toLocaleString('pt-BR', {minimumFractionDigits:2})}`;
+    }
+
+    const saldoElem = document.getElementById('salario-mes');
+    if (saldoElem) {
+        const saldoRestante = valorSalarioMes - valorTotalGastos;
+
+        // Atualiza o texto do rótulo para "Saldo Restante"
+        const labelSaldo = saldoElem.parentElement.querySelector('small');
+        if(labelSaldo) labelSaldo.innerText = "SALDO RESTANTE";
+
+        saldoElem.innerText = `R$ ${saldoRestante.toLocaleString('pt-BR', {minimumFractionDigits:2})}`;
+
+        // Fica vermelho se o saldo for menor que zero
+        saldoElem.style.color = saldoRestante < 0 ? "#ff5252" : "#00C853";
     }
 }
 
-// Executa a função ao carregar o script
 carregarDadosDash();

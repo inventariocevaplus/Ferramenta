@@ -6,6 +6,7 @@ const supabaseClient = window.supabase.createClient(
 const urlParams = new URLSearchParams(window.location.search);
 const catId = urlParams.get('id');
 let modoEdicaoLimite = false;
+let ehSalario = false; // Variável global para controle
 
 document.addEventListener('DOMContentLoaded', async () => {
     popularAnos();
@@ -39,8 +40,14 @@ async function carregarDados() {
     const ano = parseInt(document.getElementById('det-ano').value);
 
     const { data: cat } = await supabaseClient.from('categorias').select('*').eq('id', catId).single();
+
     if(cat) {
+        ehSalario = cat.nome_categoria.toLowerCase().includes("salário") || cat.nome_categoria.toLowerCase().includes("salario");
         document.getElementById('titulo-categoria').innerText = cat.nome_categoria;
+
+        // Ajusta labels se for salário
+        document.getElementById('label-limite').innerText = ehSalario ? "RENDA PREVISTA" : "LIMITE";
+        document.getElementById('label-gasto').innerText = ehSalario ? "VALOR RECEBIDO" : "GASTO TOTAL";
 
         const elLimite = document.getElementById('kpi-limite');
         if (elLimite && !modoEdicaoLimite) {
@@ -69,8 +76,13 @@ async function carregarDados() {
     const kpiGasto = document.getElementById('kpi-gasto');
     kpiGasto.innerText = `R$ ${soma.toFixed(2)}`;
 
+    // Lógica de cores: Verde para salário sempre, ou lógica de limite para despesas
     if(cat) {
-        kpiGasto.style.color = soma > cat.limite_planejado ? "#D50000" : "#00C853";
+        if (ehSalario) {
+            kpiGasto.style.color = "#00C853"; // Sempre verde para salário
+        } else {
+            kpiGasto.style.color = soma > cat.limite_planejado ? "#D50000" : "#00C853";
+        }
     }
 }
 
@@ -101,14 +113,13 @@ async function toggleEdicaoLimite() {
     }
 }
 
-// --- FUNÇÃO ATUALIZADA COM USER_NOME ---
 async function salvarGasto() {
     const session = JSON.parse(localStorage.getItem('user_session'));
     const nomeUsuario = session ? session.user_nome : "Desconhecido";
 
     const v = document.getElementById('exp-valor').value;
     const dInput = document.getElementById('exp-dia').value;
-    const desc = document.getElementById('exp-desc').value || "-";
+    const desc = document.getElementById('exp-desc').value || (ehSalario ? "Recebimento" : "-");
 
     if(!v) return;
 
@@ -116,7 +127,7 @@ async function salvarGasto() {
 
     await supabaseClient.from('gastos').insert([{
         categoria_id: catId,
-        user_nome: nomeUsuario, // Agora enviamos o nome do usuário logado
+        user_nome: nomeUsuario,
         valor: parseFloat(v),
         descricao: desc,
         dia: diaFinal,

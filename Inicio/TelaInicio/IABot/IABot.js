@@ -15,27 +15,61 @@ let transcricaoCompleta = "";
 window.estadoIA = {
     pendenteGasto: null,
     sugestaoCategoria: null,
-    tipoRelatorio: null
+    tipoRelatorio: null,
+    aguardandoSalario: false
 };
 
-// --- MOTOR DE VOZ ---
+// --- INICIALIZAÇÃO ---
+function inicializarChat() {
+    const nome = user ? user.user_nome.split(' ')[0].toUpperCase() : "USUÁRIO";
+    addMessage(`Olá **${nome}**! Sou a Easy IA. Como posso ajudar suas finanças hoje?`, 'bot');
+}
+
+// --- RECONHECIMENTO DE VOZ ---
 if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     reconhecimento = new SpeechRecognition();
     reconhecimento.lang = 'pt-BR';
     reconhecimento.continuous = true;
+    reconhecimento.interimResults = false;
 
-    reconhecimento.onstart = () => { gravando = true; transcricaoCompleta = ""; btnMic.classList.add('recording'); recStatus.style.display = 'block'; };
-    reconhecimento.onresult = (event) => { for (let i = event.resultIndex; i < event.results.length; ++i) { transcricaoCompleta += event.results[i][0].transcript; } };
+    reconhecimento.onstart = () => {
+        gravando = true;
+        transcricaoCompleta = "";
+        btnMic.classList.add('recording');
+        recStatus.style.display = 'block';
+    };
+
+    reconhecimento.onresult = (event) => {
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+            transcricaoCompleta += event.results[i][0].transcript;
+        }
+    };
+
     reconhecimento.onend = () => {
         btnMic.classList.remove('recording');
         recStatus.style.display = 'none';
-        if (transcricaoCompleta.trim() !== "") { addMessage(transcricaoCompleta, 'user'); processarCerebroIA(transcricaoCompleta); }
+        if (transcricaoCompleta.trim() !== "") {
+            addMessage(transcricaoCompleta, 'user');
+            processarCerebroIA(transcricaoCompleta);
+        }
         gravando = false;
+    };
+
+    reconhecimento.onerror = (event) => {
+        console.error("Erro no microfone:", event.error);
+        gravando = false;
+        btnMic.classList.remove('recording');
     };
 }
 
-btnMic.onclick = () => { if (!gravando) reconhecimento.start(); else reconhecimento.stop(); };
+btnMic.onclick = () => {
+    if (!gravando) {
+        try { reconhecimento.start(); } catch(e) { reconhecimento.stop(); }
+    } else {
+        reconhecimento.stop();
+    }
+};
 
 function addMessage(texto, tipo) {
     const div = document.createElement('div');
@@ -54,131 +88,162 @@ async function processarCerebroIA(input) {
     const mesAtual = meses[dataAtual.getMonth()];
     const anoAtual = dataAtual.getFullYear();
 
-    // 1. CONFIRMAÇÃO (OK / SIM)
-    const afirmou = ["sim", "é isso", "pode", "ok", "confirmar"].some(cmd => frase.includes(cmd));
-    if (afirmou) {
-        if (window.estadoIA.pendenteGasto) { await salvarGastoBanco(); return; }
-        if (window.estadoIA.sugestaoCategoria) { await executarCalculoRelatorio(window.estadoIA.sugestaoCategoria, window.estadoIA.tipoRelatorio, mesAtual, anoAtual); return; }
+    // 1. PRIORIDADE: TUTORIAL / AJUDA
+    if (frase === "tutorial" || frase.includes("ajuda") || frase === "tutorial.") {
+        addMessage(`📖 **Comandos Sugeridos:**<br>💰 "Gastei 50 em Comida"<br>💵 "Ganhei 2000 de salário"<br>📊 "Quanto eu gastei esse mês?"<br>📂 "Quais são minhas categorias?"`, "bot");
+        return;
     }
 
-    // 2. LISTAR CATEGORIAS
-    if (frase.includes("quais") && (frase.includes("categorias") || frase.includes("minhas"))) {
+    // 2. PRIORIDADE: LISTAR CATEGORIAS
+    if (frase.includes("minhas categoria") || frase.includes("quais são as categoria")) {
         const { data: categorias } = await supabaseClient.from('categorias').select('nome_categoria').eq('user_nome', user.user_nome);
-        const lista = categorias.map(c => `• ${c.nome_categoria}`).join('<br>');
-        addMessage(`📂 **Suas categorias:**<br>${lista}`, "bot");
+        const lista = categorias?.filter(c => c.nome_categoria !== 'Salario').map(c => `• ${c.nome_categoria}`).join('<br>');
+        addMessage(`📂 **Suas categorias atuais:**<br>${lista || "Nenhuma categoria encontrada."}`, "bot");
         return;
     }
 
-    // 3. IDENTIFICAÇÃO DE VALOR (LANÇAMENTO)
-    const regexValor = /(\d+[,.]\d{2})|(\d+)/g;
-    const matchesValores = frase.match(regexValor);
+    // 3. ESTADO: AGUARDANDO VALOR DO SALÁRIO
+    if (window.estadoIA.aguardandoSalario) {
+        const regexValor = /(\d+[,.]\d{2})|(\d+)/g;
+        const matches = frase.match(regexValor);
+        if (matches) {
+            let vStr = matches.find(m => m.includes(',') || m.includes('.')) || matches[0];
+            await executarSalvarSalario(parseFloat(vStr.replace(',', '.')), mesAtual, anoAtual);
+            window.estadoIA.aguardandoSalario = false; // Limpa o estado
+            return;
+        }
+    }
 
-    if (matchesValores && !frase.includes("quanto")) {
-        await processarLancamento(frase, fraseOriginal, matchesValores);
+    // 4. CONFIRMAÇÃO DE GASTO (OK / SIM)
+    const afirmou = ["sim", "é isso", "pode", "ok", "confirmar"].some(cmd => frase === cmd || frase === cmd + ".");
+    if (afirmou && window.estadoIA.pendenteGasto) {
+        await salvarGastoBanco(mesAtual, anoAtual);
         return;
     }
 
-    // 4. RELATÓRIOS
-    if (frase.includes("quanto") || frase.includes("gasto") || frase.includes("limite")) {
+    // 5. LÓGICA DE ATUALIZAR SALÁRIO
+    if (frase.includes("salário") || frase.includes("ganhei") || frase.includes("recebi") || frase.includes("atualizar salário")) {
+        const regexValor = /(\d+[,.]\d{2})|(\d+)/g;
+        const matches = frase.match(regexValor);
+        if (matches) {
+            let vStr = matches.find(m => m.includes(',') || m.includes('.')) || matches[0];
+            await executarSalvarSalario(parseFloat(vStr.replace(',', '.')), mesAtual, anoAtual);
+        } else {
+            window.estadoIA.aguardandoSalario = true;
+            addMessage("Com certeza! Qual o valor do salário ou ganho que deseja registrar?", "bot");
+        }
+        return;
+    }
+
+    // 6. RELATÓRIOS (QUANTO GASTEI)
+    if (frase.includes("quanto") || frase.includes("gasto esse mês") || frase.includes("gastei esse mês")) {
         await processarRelatoriosFlexiveis(frase, mesAtual, anoAtual);
         return;
     }
 
-    addMessage("Não entendi. Tente 'Gastei 100 categoria Conta' ou peça o 'Tutorial'.", "bot");
+    // 7. LANÇAMENTO DE GASTOS (IDENTIFICA VALOR)
+    const regexValor = /(\d+[,.]\d{2})|(\d+)/g;
+    const matchesValores = frase.match(regexValor);
+    if (matchesValores) {
+        await processarLancamento(frase, fraseOriginal, matchesValores);
+        return;
+    }
+
+    addMessage("Não entendi. Tente: 'Gastei 15 em Jogos descrição Skins de CS' ou peça o 'Tutorial'.", "bot");
 }
 
 async function processarLancamento(frase, fraseOriginal, matchesValores) {
     let vStr = matchesValores.find(m => m.includes(',') || m.includes('.')) || matchesValores[0];
     const valorGasto = parseFloat(vStr.replace(',', '.'));
     const { data: categoriasBD } = await supabaseClient.from('categorias').select('*').eq('user_nome', user.user_nome);
+    let catAlvo = categoriasBD?.find(c => frase.includes(c.nome_categoria.toLowerCase()) && c.nome_categoria !== 'Salario');
 
-    let catFinal = null;
-
-    // --- NOVA LÓGICA: SUPER PRIORIDADE PARA A PALAVRA "CATEGORIA" ---
-    if (frase.includes("categoria")) {
-        const parteDepoisCategoria = frase.split("categoria")[1].trim();
-        catFinal = categoriasBD.find(c => parteDepoisCategoria.includes(c.nome_categoria.toLowerCase()));
-    }
-
-    // Se não usou a palavra "categoria", busca normal por assimilação
-    if (!catFinal) {
-        catFinal = categoriasBD.find(c => frase.includes(c.nome_categoria.toLowerCase()));
-    }
-
-    if (!catFinal) {
-        addMessage("🤔 Categoria não identificada. Use: '... categoria [nome]'", "bot");
+    if (!catAlvo) {
+        addMessage("🤔 Não entendi a categoria. Tente: 'Gastei 10 em [Nome da Categoria]'", "bot");
         return;
     }
 
-    let desc = frase.includes("descrição") ? fraseOriginal.split(/descrição/i).pop().trim() : "";
-    desc = desc.replace(/^[^a-zA-Z0-9áéíóúÁÉÍÓÚçÇ]+/, '').trim();
+    let descricaoFinal = "Lançamento via IA";
+    const regexDesc = /(?:descrição|descricao|obs|detalhe)\.?\s*(.*)/i;
+    const matchDesc = fraseOriginal.match(regexDesc);
+    if (matchDesc && matchDesc[1]) {
+        descricaoFinal = matchDesc[1].trim();
+    }
 
     window.estadoIA.pendenteGasto = {
         valor: valorGasto,
-        categoria: catFinal.nome_categoria,
-        id_categoria: catFinal.id,
-        descricao: desc
+        categoria: catAlvo.nome_categoria,
+        id_categoria: catAlvo.id,
+        descricao: descricaoFinal
     };
 
     addMessage(`
-        <b>💰 Confirmar Lançamento?</b><br>
-        <table style="width:100%; margin-top:10px; border-collapse: collapse;">
-            <tr><td style="color:#666;">Valor:</td><td><b>R$ ${valorGasto.toFixed(2)}</b></td></tr>
-            <tr><td style="color:#666;">Categoria:</td><td><b>${catFinal.nome_categoria}</b></td></tr>
-            <tr><td style="color:#666;">Descrição:</td><td><i>${desc || "Não informada"}</i></td></tr>
-        </table>
-        <br>Diga <b>"OK"</b> para salvar!
+        💰 **Confirmar Gasto?**<br>
+        -------------------------<br>
+        💵 **Valor:** R$ ${valorGasto.toFixed(2)}<br>
+        📂 **Categoria:** ${catAlvo.nome_categoria}<br>
+        📝 **Descrição:** ${descricaoFinal}<br>
+        -------------------------<br>
+        Diga **"OK"** para salvar!
     `, "bot");
 }
 
-// --- RESTANTE DAS FUNÇÕES (RELATÓRIOS E SALVAMENTO) ---
-async function processarRelatoriosFlexiveis(frase, mes, ano) {
-    const { data: categorias } = await supabaseClient.from('categorias').select('*').eq('user_nome', user.user_nome);
-    let catAlvo = categorias.find(c => frase.includes(c.nome_categoria.toLowerCase()));
-
-    if (!catAlvo && (frase.includes("com") || frase.includes("em"))) {
-        catAlvo = categorias.find(c => frase.includes(c.nome_categoria.toLowerCase().substring(0, 4)));
-        if (catAlvo) {
-            window.estadoIA.sugestaoCategoria = catAlvo;
-            window.estadoIA.tipoRelatorio = frase.includes("posso gastar") ? "limite" : "gasto";
-            addMessage(`🤔 Você quis dizer a categoria **${catAlvo.nome_categoria}**?`, "bot");
-            return;
-        }
-    }
-    await executarCalculoRelatorio(catAlvo, frase, mes, ano);
-}
-
-async function executarCalculoRelatorio(catAlvo, contexto, mes, ano) {
-    const { data: gastos } = await supabaseClient.from('gastos').select('*, categorias(nome_categoria, limite_planejado)')
-        .eq('user_nome', user.user_nome).eq('mes', mes).eq('ano', ano);
-
-    if (catAlvo) {
-        const totalCat = gastos.filter(g => g.categoria_id === catAlvo.id).reduce((acc, g) => acc + g.valor, 0);
-        const limite = catAlvo.limite_planejado || 0;
-        if (contexto.includes("posso gastar") || window.estadoIA.tipoRelatorio === "limite") {
-            const sobra = limite - totalCat;
-            addMessage(`💰 **${catAlvo.nome_categoria}**:<br>Já gastou: R$ ${totalCat.toFixed(2)}<br>Ainda pode: **R$ ${sobra.toFixed(2)}**`, "bot");
-        } else {
-            addMessage(`📊 Gastos em **${catAlvo.nome_categoria}**: R$ ${totalCat.toFixed(2)}.`, "bot");
-        }
-    } else {
-        const totalGeral = gastos.reduce((acc, g) => acc + g.valor, 0);
-        addMessage(`📉 Gasto total em ${mes}: **R$ ${totalGeral.toFixed(2)}**.`, "bot");
-    }
-    window.estadoIA.sugestaoCategoria = null;
-    window.estadoIA.tipoRelatorio = null;
-}
-
-async function salvarGastoBanco() {
+async function salvarGastoBanco(mes, ano) {
     const g = window.estadoIA.pendenteGasto;
-    const d = new Date();
-    const meses = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
-
-    await supabaseClient.from('gastos').insert([{
-        categoria_id: g.id_categoria, user_nome: user.user_nome, valor: g.valor,
-        descricao: g.descricao, dia: d.getDate(), mes: meses[d.getMonth()], ano: d.getFullYear()
-    }]);
-
-    addMessage("🚀 **Salvo com sucesso no seu Dash!**", "bot");
+    try {
+        const { error } = await supabaseClient.from('gastos').insert([{
+            categoria_id: g.id_categoria,
+            user_nome: user.user_nome,
+            valor: g.valor,
+            descricao: g.descricao,
+            dia: new Date().getDate(),
+            mes: mes,
+            ano: parseInt(ano)
+        }]);
+        if(error) throw error;
+        addMessage("🚀 **Salvo com sucesso!**", "bot");
+    } catch(e) {
+        addMessage("❌ Erro ao salvar gasto.", "bot");
+    }
     window.estadoIA.pendenteGasto = null;
 }
+
+async function executarSalvarSalario(valor, mes, ano) {
+    try {
+        let { data: catSal } = await supabaseClient.from('categorias').select('id').eq('user_nome', user.user_nome).eq('nome_categoria', 'Salario').maybeSingle();
+        if (!catSal) {
+            const { data: novaCat } = await supabaseClient.from('categorias').insert([{
+                user_nome: user.user_nome, nome_categoria: 'Salario', icone: 'fa-money-bill-wave', limite_planejado: 0, gasto_atual: 0, mes: mes, ano: parseInt(ano)
+            }]).select().single();
+            catSal = novaCat;
+        }
+        await supabaseClient.from('gastos').delete().eq('categoria_id', catSal.id).eq('mes', mes).eq('ano', ano);
+        await supabaseClient.from('gastos').insert([{
+            categoria_id: catSal.id, user_nome: user.user_nome, valor: valor, descricao: 'Entrada de Salário', dia: new Date().getDate(), mes: mes, ano: parseInt(ano)
+        }]);
+        addMessage(`✅ **Salário de R$ ${valor.toFixed(2)} registrado!**`, "bot");
+    } catch (err) { addMessage("❌ Erro ao salvar salário.", "bot"); }
+}
+
+async function processarRelatoriosFlexiveis(frase, mes, ano) {
+    // Busca os gastos e o limite planejado das categorias
+    const { data: gastos, error } = await supabaseClient
+        .from('gastos')
+        .select('valor, categorias(nome_categoria)')
+        .eq('user_nome', user.user_nome)
+        .eq('mes', mes)
+        .eq('ano', ano);
+
+    if (error) {
+        addMessage("❌ Erro ao buscar gastos.", "bot");
+        return;
+    }
+
+    // Soma apenas o que NÃO for salário
+    const totalGeral = gastos?.filter(g => g.categorias && g.categorias.nome_categoria !== 'Salario')
+                             .reduce((acc, g) => acc + g.valor, 0) || 0;
+
+    addMessage(`📊 Seu gasto total em despesas para **${mes}** é **R$ ${totalGeral.toFixed(2)}**.`, "bot");
+}
+
+inicializarChat();

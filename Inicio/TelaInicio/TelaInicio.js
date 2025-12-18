@@ -31,8 +31,8 @@ async function loadContent(path) {
                             <h2 id="total-gasto">R$ 0,00</h2>
                         </div>
                         <div class="resumo-item salario">
-                            <small>SALÁRIO DO MÊS</small>
-                            <h2 id="salario-mes">R$ 0,00</h2>
+                            <small>SALDO RESTANTE</small>
+                            <h2 id="salario-mes" style="color: #00C853;">R$ 0,00</h2>
                         </div>
                     </div>
 
@@ -91,8 +91,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (logoutBtn) {
         logoutBtn.onclick = () => {
             localStorage.removeItem('user_session');
-            localStorage.removeItem('filtro_mes');
-            localStorage.removeItem('filtro_ano');
+            localStorage.removeItem('dash_mes_cache');
+            localStorage.removeItem('dash_ano_cache');
             window.location.href = '../Login/Login.html';
         };
     }
