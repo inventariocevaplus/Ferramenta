@@ -18,6 +18,7 @@ window.estadoIA = {
     tipoRelatorio: null
 };
 
+// --- MOTOR DE VOZ ---
 if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     reconhecimento = new SpeechRecognition();
@@ -44,6 +45,7 @@ function addMessage(texto, tipo) {
     chatBox.scrollTop = chatBox.scrollHeight;
 }
 
+// --- CÉREBRO DA IA ---
 async function processarCerebroIA(input) {
     const fraseOriginal = input.trim();
     const frase = fraseOriginal.toLowerCase();
@@ -52,55 +54,84 @@ async function processarCerebroIA(input) {
     const mesAtual = meses[dataAtual.getMonth()];
     const anoAtual = dataAtual.getFullYear();
 
-    // 1. PRIORIDADE TOTAL: CONFIRMAÇÃO (OK / SIM)
+    // 1. CONFIRMAÇÃO (OK / SIM)
     const afirmou = ["sim", "é isso", "pode", "ok", "confirmar"].some(cmd => frase.includes(cmd));
     if (afirmou) {
-        if (window.estadoIA.pendenteGasto) {
-            await salvarGastoBanco();
-            return;
-        }
-        if (window.estadoIA.sugestaoCategoria) {
-            await executarCalculoRelatorio(window.estadoIA.sugestaoCategoria, window.estadoIA.tipoRelatorio, mesAtual, anoAtual);
-            return;
-        }
+        if (window.estadoIA.pendenteGasto) { await salvarGastoBanco(); return; }
+        if (window.estadoIA.sugestaoCategoria) { await executarCalculoRelatorio(window.estadoIA.sugestaoCategoria, window.estadoIA.tipoRelatorio, mesAtual, anoAtual); return; }
     }
 
     // 2. LISTAR CATEGORIAS
     if (frase.includes("quais") && (frase.includes("categorias") || frase.includes("minhas"))) {
         const { data: categorias } = await supabaseClient.from('categorias').select('nome_categoria').eq('user_nome', user.user_nome);
-        if (categorias && categorias.length > 0) {
-            const lista = categorias.map(c => `• ${c.nome_categoria}`).join('<br>');
-            addMessage(`📂 **Suas categorias atuais:**<br>${lista}`, "bot");
-        } else {
-            addMessage("Você ainda não tem categorias criadas.", "bot");
-        }
+        const lista = categorias.map(c => `• ${c.nome_categoria}`).join('<br>');
+        addMessage(`📂 **Suas categorias:**<br>${lista}`, "bot");
         return;
     }
 
-    // 3. TUTORIAL
-    if (frase.includes("tutorial") || frase.includes("ajuda")) {
-        addMessage(`📖 **Comandos:**<br>💰 "Gastei 50 em Comida"<br>📊 "Quanto eu gastei esse mês?"<br>⚠️ "Quanto posso gastar com Saúde?"<br>📂 "Quais são minhas categorias?"`, "bot");
-        return;
-    }
-
-    // 4. IDENTIFICAÇÃO DE VALOR (Lançamento)
+    // 3. IDENTIFICAÇÃO DE VALOR (LANÇAMENTO)
     const regexValor = /(\d+[,.]\d{2})|(\d+)/g;
     const matchesValores = frase.match(regexValor);
 
-    if (matchesValores && !frase.includes("quanto") && !frase.includes("qual")) {
+    if (matchesValores && !frase.includes("quanto")) {
         await processarLancamento(frase, fraseOriginal, matchesValores);
         return;
     }
 
-    // 5. RELATÓRIOS (Consultas)
-    if (frase.includes("quanto") || frase.includes("gasto") || frase.includes("gastei") || frase.includes("limite")) {
+    // 4. RELATÓRIOS
+    if (frase.includes("quanto") || frase.includes("gasto") || frase.includes("limite")) {
         await processarRelatoriosFlexiveis(frase, mesAtual, anoAtual);
         return;
     }
 
-    addMessage("Não entendi. Tente confirmar com 'OK' ou peça o 'Tutorial'.", "bot");
+    addMessage("Não entendi. Tente 'Gastei 100 categoria Conta' ou peça o 'Tutorial'.", "bot");
 }
 
+async function processarLancamento(frase, fraseOriginal, matchesValores) {
+    let vStr = matchesValores.find(m => m.includes(',') || m.includes('.')) || matchesValores[0];
+    const valorGasto = parseFloat(vStr.replace(',', '.'));
+    const { data: categoriasBD } = await supabaseClient.from('categorias').select('*').eq('user_nome', user.user_nome);
+
+    let catFinal = null;
+
+    // --- NOVA LÓGICA: SUPER PRIORIDADE PARA A PALAVRA "CATEGORIA" ---
+    if (frase.includes("categoria")) {
+        const parteDepoisCategoria = frase.split("categoria")[1].trim();
+        catFinal = categoriasBD.find(c => parteDepoisCategoria.includes(c.nome_categoria.toLowerCase()));
+    }
+
+    // Se não usou a palavra "categoria", busca normal por assimilação
+    if (!catFinal) {
+        catFinal = categoriasBD.find(c => frase.includes(c.nome_categoria.toLowerCase()));
+    }
+
+    if (!catFinal) {
+        addMessage("🤔 Categoria não identificada. Use: '... categoria [nome]'", "bot");
+        return;
+    }
+
+    let desc = frase.includes("descrição") ? fraseOriginal.split(/descrição/i).pop().trim() : "";
+    desc = desc.replace(/^[^a-zA-Z0-9áéíóúÁÉÍÓÚçÇ]+/, '').trim();
+
+    window.estadoIA.pendenteGasto = {
+        valor: valorGasto,
+        categoria: catFinal.nome_categoria,
+        id_categoria: catFinal.id,
+        descricao: desc
+    };
+
+    addMessage(`
+        <b>💰 Confirmar Lançamento?</b><br>
+        <table style="width:100%; margin-top:10px; border-collapse: collapse;">
+            <tr><td style="color:#666;">Valor:</td><td><b>R$ ${valorGasto.toFixed(2)}</b></td></tr>
+            <tr><td style="color:#666;">Categoria:</td><td><b>${catFinal.nome_categoria}</b></td></tr>
+            <tr><td style="color:#666;">Descrição:</td><td><i>${desc || "Não informada"}</i></td></tr>
+        </table>
+        <br>Diga <b>"OK"</b> para salvar!
+    `, "bot");
+}
+
+// --- RESTANTE DAS FUNÇÕES (RELATÓRIOS E SALVAMENTO) ---
 async function processarRelatoriosFlexiveis(frase, mes, ano) {
     const { data: categorias } = await supabaseClient.from('categorias').select('*').eq('user_nome', user.user_nome);
     let catAlvo = categorias.find(c => frase.includes(c.nome_categoria.toLowerCase()));
@@ -138,52 +169,14 @@ async function executarCalculoRelatorio(catAlvo, contexto, mes, ano) {
     window.estadoIA.tipoRelatorio = null;
 }
 
-async function processarLancamento(frase, fraseOriginal, matchesValores) {
-    let vStr = matchesValores.find(m => m.includes(',') || m.includes('.')) || matchesValores[0];
-    const valorGasto = parseFloat(vStr.replace(',', '.'));
-    const { data: categoriasBD } = await supabaseClient.from('categorias').select('*').eq('user_nome', user.user_nome);
-    let catFinal = categoriasBD?.find(c => frase.includes(c.nome_categoria.toLowerCase()))?.nome_categoria;
-
-    if (!catFinal) {
-        addMessage("🤔 Não achei a categoria. Diga 'Quais são minhas categorias' para conferir.", "bot");
-        return;
-    }
-
-    let desc = frase.includes("descrição") ? fraseOriginal.split(/descrição/i).pop().trim() : "";
-    desc = desc.replace(/^[^a-zA-Z0-9áéíóúÁÉÍÓÚçÇ]+/, '').trim();
-
-    window.estadoIA.pendenteGasto = {
-        valor: valorGasto,
-        categoria: catFinal,
-        id_categoria: categoriasBD.find(c => c.nome_categoria === catFinal).id,
-        descricao: desc
-    };
-
-    // Estilo Tabela para Confirmação
-    addMessage(`
-        <b>💰 Confirmar Lançamento?</b><br>
-        <table style="width:100%; margin-top:10px; border-collapse: collapse;">
-            <tr><td style="color:#666;">Valor:</td><td><b>R$ ${valorGasto.toFixed(2)}</b></td></tr>
-            <tr><td style="color:#666;">Categoria:</td><td><b>${catFinal}</b></td></tr>
-            <tr><td style="color:#666;">Descrição:</td><td><i>${desc || "Não informada"}</i></td></tr>
-        </table>
-        <br>Diga <b>"OK"</b> para salvar!
-    `, "bot");
-}
-
 async function salvarGastoBanco() {
     const g = window.estadoIA.pendenteGasto;
     const d = new Date();
     const meses = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 
     await supabaseClient.from('gastos').insert([{
-        categoria_id: g.id_categoria,
-        user_nome: user.user_nome,
-        valor: g.valor,
-        descricao: g.descricao,
-        dia: d.getDate(),
-        mes: meses[d.getMonth()],
-        ano: d.getFullYear()
+        categoria_id: g.id_categoria, user_nome: user.user_nome, valor: g.valor,
+        descricao: g.descricao, dia: d.getDate(), mes: meses[d.getMonth()], ano: d.getFullYear()
     }]);
 
     addMessage("🚀 **Salvo com sucesso no seu Dash!**", "bot");
