@@ -96,7 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             if(p === 'Extrato') {
-                window.location.href = `Extrato/extrato.html`;
+                window.location.href = `Extrato/Extrato.html`;
                 return;
             }
 
