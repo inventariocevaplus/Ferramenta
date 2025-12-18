@@ -31,6 +31,7 @@ async function carregarDadosDash() {
             const limite = parseFloat(cat.limite_planejado) || 0;
             const ultrapassou = somaGastoReal > limite;
 
+            // Mantendo exatamente a sua estrutura original de ícones e cores do CSS
             grid.innerHTML += `
                 <div class="cat-card ${ultrapassou ? 'limite-estourado' : ''}"
                      onclick="window.location.href='categoria/detalhes.html?id=${cat.id}'">
