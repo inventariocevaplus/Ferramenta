@@ -89,8 +89,7 @@ async function abrirModalEvolucao(userNome) {
                         <p id="subtitulo-grafico" style="font-size:11px; color:#b2bec3; margin:0;">Toque na coluna para detalhes</p>
                     </div>
 
-                    <div id="resumo-mes-pop" style="display:none; background:#f1f2f6; border-radius:15px; padding:12px; margin-bottom:15px; animation:fadeInUp 0.3s ease; border-left: 4px solid #6c5ce7;">
-                        </div>
+                    <div id="resumo-mes-pop" style="display:none; background:#f1f2f6; border-radius:15px; padding:12px; margin-bottom:15px; animation:fadeInUp 0.3s ease; border-left: 4px solid #6c5ce7;"></div>
 
                     <div id="canvas-grafico" style="display:flex; align-items:flex-end; justify-content:space-between; height:240px; padding:10px 15px; background:#f8f9fa; border-radius:18px; position:relative; overflow:visible;">
                     </div>
@@ -100,60 +99,90 @@ async function abrirModalEvolucao(userNome) {
     }
 
     const canvas = document.getElementById('canvas-grafico');
-    canvas.innerHTML = "<div style='width:100%; text-align:center; color:#b2bec3; font-size:12px;'>Calculando...</div>";
+    canvas.innerHTML = "<div style='width:100%; text-align:center; color:#b2bec3; font-size:12px;'>Carregando dados...</div>";
 
     const mesesLongos = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
     const mesesNomes = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
-    let dadosGrafico = [];
-    let hoje = new Date();
+    const hoje = new Date();
 
-    for (let i = 5; i >= 0; i--) {
-        let d = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
-        let mNome = mesesLongos[d.getMonth()];
-        let ano = d.getFullYear();
-
-        const { data: cats } = await window.supabaseClient.from('categorias').select('id, nome_categoria').eq('user_nome', userNome);
-        let sal = 0, gas = 0;
-
-        if (cats) {
-            for (let c of cats) {
-                const { data: regs } = await window.supabaseClient.from('gastos').select('valor').eq('categoria_id', c.id).eq('mes', mNome).eq('ano', ano);
-                let soma = regs ? regs.reduce((acc, v) => acc + v.valor, 0) : 0;
-                if (c.nome_categoria.toLowerCase().includes('salario') || c.nome_categoria.toLowerCase().includes('salário')) sal += soma;
-                else gas += soma;
-            }
-        }
-        dadosGrafico.push({ mes: mesesNomes[d.getMonth()], mesLongo: mNome, salario: sal, gasto: gas, sobra: (sal - gas) });
-    }
-
-    const maxValor = Math.max(...dadosGrafico.map(d => Math.max(d.salario, d.gasto)), 1);
-    const alturaMaximaPx = 180; // Aumentado um pouco já que tiramos o texto de cima
-
-    canvas.innerHTML = "";
-
-    dadosGrafico.forEach(d => {
-        const altSal = (d.salario / maxValor) * alturaMaximaPx;
-        const altGas = (d.gasto / maxValor) * alturaMaximaPx;
-
-        const colunaHtml = `
-            <div class="coluna-grupo" onclick="exibirResumoMes('${d.mesLongo}', ${d.salario}, ${d.gasto}, ${d.sobra})" style="display:flex; flex-direction:column; align-items:center; flex:1; height:100%; position:relative; z-index:2; justify-content:flex-end; cursor:pointer;">
-
-                <div style="display:flex; align-items:flex-end; gap:6px; margin-bottom:35px;">
-                    <div style="display:flex; flex-direction:column; align-items:center;">
-                        <span style="font-size:8px; color:#ff7675; margin-bottom:3px; font-weight:600;">${d.gasto > 0 ? Math.round(d.gasto) : ''}</span>
-                        <div class="bar" style="width:16px; height:${altGas}px; min-height:${d.gasto > 0 ? '4px' : '0'}; background:#ff7675; border-radius:4px 4px 2px 2px;"></div>
-                    </div>
-
-                    <div style="display:flex; flex-direction:column; align-items:center;">
-                        <span style="font-size:8px; color:#2ecc71; margin-bottom:3px; font-weight:600;">${d.salario > 0 ? Math.round(d.salario) : ''}</span>
-                        <div class="bar" style="width:16px; height:${altSal}px; min-height:${d.salario > 0 ? '4px' : '0'}; background:#2ecc71; border-radius:4px 4px 2px 2px;"></div>
-                    </div>
-                </div>
-
-                <span style="font-size:10px; font-weight:bold; color:#a4b0be; position:absolute; bottom:8px;">${d.mes}</span>
-            </div>`;
-        canvas.innerHTML += colunaHtml;
+    // 1. Criamos um array com as definições dos últimos 6 meses
+    const mesesParaBuscar = Array.from({ length: 6 }, (_, i) => {
+        const d = new Date(hoje.getFullYear(), hoje.getMonth() - (5 - i), 1);
+        return {
+            nomeLongo: mesesLongos[d.getMonth()],
+            nomeCurto: mesesNomes[d.getMonth()],
+            ano: d.getFullYear()
+        };
     });
+
+    try {
+        // 2. Buscamos todas as categorias UMA ÚNICA VEZ
+        const { data: categorias } = await window.supabaseClient.from('categorias').select('id, nome_categoria').eq('user_nome', userNome);
+
+        // 3. Criamos as promessas de busca para todos os meses em paralelo
+        const dadosGrafico = await Promise.all(mesesParaBuscar.map(async (mes) => {
+            let sal = 0, gas = 0;
+
+            if (categorias && categorias.length > 0) {
+                // Buscamos todos os gastos do mês de uma vez só para este mês específico
+                const idsCategorias = categorias.map(c => c.id);
+                const { data: registros } = await window.supabaseClient
+                    .from('gastos')
+                    .select('valor, categoria_id')
+                    .in('categoria_id', idsCategorias)
+                    .eq('mes', mes.nomeLongo)
+                    .eq('ano', mes.ano);
+
+                if (registros) {
+                    registros.forEach(reg => {
+                        const cat = categorias.find(c => c.id === reg.categoria_id);
+                        const nomeCat = cat.nome_categoria.toLowerCase();
+                        if (nomeCat.includes('salario') || nomeCat.includes('salário')) {
+                            sal += reg.valor;
+                        } else {
+                            gas += reg.valor;
+                        }
+                    });
+                }
+            }
+
+            return {
+                mes: mes.nomeCurto,
+                mesLongo: mes.nomeLongo,
+                salario: sal,
+                gasto: gas,
+                sobra: (sal - gas)
+            };
+        }));
+
+        // 4. Renderização (mesmo código anterior, mas os dados chegam juntos)
+        const maxValor = Math.max(...dadosGrafico.map(d => Math.max(d.salario, d.gasto)), 1);
+        const alturaMaximaPx = 180;
+        canvas.innerHTML = "";
+
+        dadosGrafico.forEach(d => {
+            const altSal = (d.salario / maxValor) * alturaMaximaPx;
+            const altGas = (d.gasto / maxValor) * alturaMaximaPx;
+
+            canvas.innerHTML += `
+                <div class="coluna-grupo" onclick="exibirResumoMes('${d.mesLongo}', ${d.salario}, ${d.gasto}, ${d.sobra})" style="display:flex; flex-direction:column; align-items:center; flex:1; height:100%; position:relative; z-index:2; justify-content:flex-end; cursor:pointer;">
+                    <div style="display:flex; align-items:flex-end; gap:6px; margin-bottom:35px;">
+                        <div style="display:flex; flex-direction:column; align-items:center;">
+                            <span style="font-size:8px; color:#ff7675; margin-bottom:3px; font-weight:600;">${d.gasto > 0 ? Math.round(d.gasto) : ''}</span>
+                            <div class="bar" style="width:16px; height:${altGas}px; min-height:${d.gasto > 0 ? '4px' : '0'}; background:#ff7675; border-radius:4px 4px 2px 2px;"></div>
+                        </div>
+                        <div style="display:flex; flex-direction:column; align-items:center;">
+                            <span style="font-size:8px; color:#2ecc71; margin-bottom:3px; font-weight:600;">${d.salario > 0 ? Math.round(d.salario) : ''}</span>
+                            <div class="bar" style="width:16px; height:${altSal}px; min-height:${d.salario > 0 ? '4px' : '0'}; background:#2ecc71; border-radius:4px 4px 2px 2px;"></div>
+                        </div>
+                    </div>
+                    <span style="font-size:10px; font-weight:bold; color:#a4b0be; position:absolute; bottom:8px;">${d.mes}</span>
+                </div>`;
+        });
+    } catch (error) {
+        canvas.innerHTML = "<div style='color:red; font-size:10px;'>Erro ao carregar dados.</div>";
+        console.error(error);
+    }
 }
 
 function exibirResumoMes(nome, sal, gas, sob) {
