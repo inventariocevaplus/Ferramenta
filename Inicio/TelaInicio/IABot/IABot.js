@@ -14,8 +14,8 @@ let transcricaoCompleta = "";
 
 window.estadoIA = {
     pendenteGasto: null,
-    sugestaoCategoria: null,
-    tipoRelatorio: null,
+    pendenteNovaCategoria: null, // Para criação de nova categoria
+    aguardandoLimite: false,
     aguardandoSalario: false
 };
 
@@ -23,6 +23,21 @@ window.estadoIA = {
 function inicializarChat() {
     const nome = user ? user.user_nome.split(' ')[0].toUpperCase() : "USUÁRIO";
     addMessage(`Olá **${nome}**! Sou a Easy IA. Como posso ajudar suas finanças hoje?`, 'bot');
+}
+
+// --- FUNÇÃO AUXILIAR: LIMPEZA DE VALORES DE ÁUDIO ---
+function extrairValorNumerico(texto) {
+    let t = texto.toLowerCase()
+        .replace(/ reais/g, '')
+        .replace(/ real/g, '')
+        .replace(/ brl/g, '')
+        .replace(/ centavos/g, '')
+        .replace(/ e (\d{1,2})\b/g, '.$1') // Transforma "10 e 50" em "10.50"
+        .replace(/, /g, '.')
+        .replace(/,/g, '.');
+
+    const matches = t.match(/\d+(\.\d+)?/g);
+    return matches ? matches[0] : null;
 }
 
 // --- RECONHECIMENTO DE VOZ ---
@@ -88,13 +103,57 @@ async function processarCerebroIA(input) {
     const mesAtual = meses[dataAtual.getMonth()];
     const anoAtual = dataAtual.getFullYear();
 
-    // 1. PRIORIDADE: TUTORIAL / AJUDA
+    // 1. ESTADO: AGUARDANDO LIMITE PARA NOVA CATEGORIA
+    if (window.estadoIA.aguardandoLimite) {
+        const vStr = extrairValorNumerico(frase);
+        if (vStr) {
+            const limiteVal = parseFloat(vStr);
+            await criarCategoriaESalvarGasto(limiteVal, mesAtual, anoAtual);
+            return;
+        }
+    }
+
+    // 2. PRIORIDADE: TUTORIAL COMPLETO (Todas as funções do código)
     if (frase === "tutorial" || frase.includes("ajuda") || frase === "tutorial.") {
-        addMessage(`📖 **Comandos Sugeridos:**<br>💰 "Gastei 50 em Comida"<br>💵 "Ganhei 2000 de salário"<br>📊 "Quanto eu gastei esse mês?"<br>📂 "Quais são minhas categorias?"`, "bot");
+        addMessage(`
+            📖 **Tudo o que eu posso fazer:**<br><br>
+            💰 **Lançar Gastos:**<br>
+            <i>"Gastei 50 em Compras"</i><br><br>
+            💵 **Gerenciar Salário:**<br>
+            <i>"Recebi 3000 de salário"</i> ou <i>"Atualizar salário"</i><br><br>
+            📊 **Saldo Restante:**<br>
+            <i>"Quanto ainda posso gastar em Comida?"</i><br><br>
+            📋 **Ver Gastos Detalhados:**<br>
+            <i>"Mostre o extrato de Mercado"</i><br><br>
+            ⚠️ **Alertas de Limite:**<br>
+            <i>"O que passou do limite?"</i><br><br>
+            📂 **Listar Categorias:**<br>
+            <i>"Quais são minhas categorias?"</i><br><br>
+            📉 **Gasto Total Mensal:**<br>
+            <i>"Quanto eu gastei no total este mês?"</i>
+        `, "bot");
         return;
     }
 
-    // 2. PRIORIDADE: LISTAR CATEGORIAS
+    // 3. RELATÓRIO: CATEGORIA QUE ULTRAPASSOU O LIMITE
+    if (frase.includes("passou do limite") || frase.includes("ultrapassou") || frase.includes("limite excedido") || frase.includes("extrapolou")) {
+        await relatorioLimitesExcedidos(mesAtual, anoAtual);
+        return;
+    }
+
+    // 4. RELATÓRIO: EXTRATO DE CATEGORIA (TABELA)
+    if (frase.includes("mostre") || frase.includes("fale os gastos") || frase.includes("extrato") || frase.includes("ver meus gastos")) {
+        await mostrarExtratoCategoria(frase, mesAtual, anoAtual);
+        return;
+    }
+
+    // 5. CONSULTA: QUANTO POSSO GASTAR (SALDO DISPONÍVEL)
+    if (frase.includes("quanto posso gastar") || frase.includes("posso gastar em") || frase.includes("qual o saldo")) {
+        await consultarSaldoCategoria(frase, mesAtual, anoAtual);
+        return;
+    }
+
+    // 6. PRIORIDADE: LISTAR CATEGORIAS
     if (frase.includes("minhas categoria") || frase.includes("quais são as categoria")) {
         const { data: categorias } = await supabaseClient.from('categorias').select('nome_categoria').eq('user_nome', user.user_nome);
         const lista = categorias?.filter(c => c.nome_categoria !== 'Salario').map(c => `• ${c.nome_categoria}`).join('<br>');
@@ -102,32 +161,28 @@ async function processarCerebroIA(input) {
         return;
     }
 
-    // 3. ESTADO: AGUARDANDO VALOR DO SALÁRIO
+    // 7. ESTADO: AGUARDANDO VALOR DO SALÁRIO
     if (window.estadoIA.aguardandoSalario) {
-        const regexValor = /(\d+[,.]\d{2})|(\d+)/g;
-        const matches = frase.match(regexValor);
-        if (matches) {
-            let vStr = matches.find(m => m.includes(',') || m.includes('.')) || matches[0];
-            await executarSalvarSalario(parseFloat(vStr.replace(',', '.')), mesAtual, anoAtual);
-            window.estadoIA.aguardandoSalario = false; // Limpa o estado
+        const vStr = extrairValorNumerico(frase);
+        if (vStr) {
+            await executarSalvarSalario(parseFloat(vStr), mesAtual, anoAtual);
+            window.estadoIA.aguardandoSalario = false;
             return;
         }
     }
 
-    // 4. CONFIRMAÇÃO DE GASTO (OK / SIM)
-    const afirmou = ["sim", "é isso", "pode", "ok", "confirmar"].some(cmd => frase === cmd || frase === cmd + ".");
+    // 8. CONFIRMAÇÃO DE GASTO (OK / SIM)
+    const afirmou = ["sim", "é isso", "pode", "ok", "confirmar", "pode salvar"].some(cmd => frase.includes(cmd));
     if (afirmou && window.estadoIA.pendenteGasto) {
         await salvarGastoBanco(mesAtual, anoAtual);
         return;
     }
 
-    // 5. LÓGICA DE ATUALIZAR SALÁRIO
+    // 9. LÓGICA DE ATUALIZAR SALÁRIO
     if (frase.includes("salário") || frase.includes("ganhei") || frase.includes("recebi") || frase.includes("atualizar salário")) {
-        const regexValor = /(\d+[,.]\d{2})|(\d+)/g;
-        const matches = frase.match(regexValor);
-        if (matches) {
-            let vStr = matches.find(m => m.includes(',') || m.includes('.')) || matches[0];
-            await executarSalvarSalario(parseFloat(vStr.replace(',', '.')), mesAtual, anoAtual);
+        const vStr = extrairValorNumerico(frase);
+        if (vStr) {
+            await executarSalvarSalario(parseFloat(vStr), mesAtual, anoAtual);
         } else {
             window.estadoIA.aguardandoSalario = true;
             addMessage("Com certeza! Qual o valor do salário ou ganho que deseja registrar?", "bot");
@@ -135,39 +190,62 @@ async function processarCerebroIA(input) {
         return;
     }
 
-    // 6. RELATÓRIOS (QUANTO GASTEI)
-    if (frase.includes("quanto") || frase.includes("gasto esse mês") || frase.includes("gastei esse mês")) {
+    // 10. RELATÓRIOS GERAIS (Quanto gastei no total)
+    if (frase.includes("quanto") && (frase.includes("gastei") || frase.includes("gasto")) && !frase.includes("posso gastar")) {
         await processarRelatoriosFlexiveis(frase, mesAtual, anoAtual);
         return;
     }
 
-    // 7. LANÇAMENTO DE GASTOS (IDENTIFICA VALOR)
-    const regexValor = /(\d+[,.]\d{2})|(\d+)/g;
-    const matchesValores = frase.match(regexValor);
-    if (matchesValores) {
-        await processarLancamento(frase, fraseOriginal, matchesValores);
+    // 11. LANÇAMENTO DE GASTOS (IDENTIFICA VALOR)
+    const vStr = extrairValorNumerico(frase);
+    if (vStr) {
+        await processarLancamento(frase, fraseOriginal, vStr);
         return;
     }
 
-    addMessage("Não entendi. Tente: 'Gastei 15 em Jogos descrição Skins de CS' ou peça o 'Tutorial'.", "bot");
+    // 12. SUGESTÕES INTELIGENTES
+    addMessage(`🤔 Não entendi muito bem. Você pretendia saber:<br><br>
+    • **Quanto gastou em uma categoria?** <br><i>"Mostre meus gastos com Compras"</i><br><br>
+    • **Como atualizar seu salário?** <br><i>"Atualizar salário 2500,00 reais"</i><br><br>
+    Peça o **"Tutorial"** para ver todos os comandos.`, "bot");
 }
 
-async function processarLancamento(frase, fraseOriginal, matchesValores) {
-    let vStr = matchesValores.find(m => m.includes(',') || m.includes('.')) || matchesValores[0];
-    const valorGasto = parseFloat(vStr.replace(',', '.'));
+async function processarLancamento(frase, fraseOriginal, vStr) {
+    const valorGasto = parseFloat(vStr);
     const { data: categoriasBD } = await supabaseClient.from('categorias').select('*').eq('user_nome', user.user_nome);
-    let catAlvo = categoriasBD?.find(c => frase.includes(c.nome_categoria.toLowerCase()) && c.nome_categoria !== 'Salario');
 
-    if (!catAlvo) {
-        addMessage("🤔 Não entendi a categoria. Tente: 'Gastei 10 em [Nome da Categoria]'", "bot");
-        return;
+    let nomeCatDetectado = null;
+    let catAlvo = null;
+
+    // Lógica inteligente de busca de categoria (Singular/Plural)
+    for (const c of categoriasBD) {
+        const nomeCatDB = c.nome_categoria.toLowerCase();
+        if (frase.includes(nomeCatDB) || (nomeCatDB.length > 3 && frase.includes(nomeCatDB.substring(0, nomeCatDB.length - 1)))) {
+            if (nomeCatDB !== 'salario') {
+                nomeCatDetectado = c.nome_categoria;
+                catAlvo = c;
+                break;
+            }
+        }
     }
 
     let descricaoFinal = "Lançamento via IA";
     const regexDesc = /(?:descrição|descricao|obs|detalhe)\.?\s*(.*)/i;
     const matchDesc = fraseOriginal.match(regexDesc);
-    if (matchDesc && matchDesc[1]) {
-        descricaoFinal = matchDesc[1].trim();
+    if (matchDesc && matchDesc[1]) descricaoFinal = matchDesc[1].trim();
+
+    if (!nomeCatDetectado) {
+        const tentativaCat = frase.match(/(?:em|na|no|categoria)\s+([\wáéíóúãõç]+)/i);
+        const novaCatNome = tentativaCat ? tentativaCat[1] : "Diversos";
+
+        window.estadoIA.pendenteNovaCategoria = {
+            nome: novaCatNome.charAt(0).toUpperCase() + novaCatNome.slice(1),
+            valor: valorGasto,
+            descricao: descricaoFinal
+        };
+        window.estadoIA.aguardandoLimite = true;
+        addMessage(`⚠️ Categoria **"${novaCatNome}"** não encontrada. Deseja criar uma nova categoria? Se sim, **qual o valor de limite mensal** para ela?`, "bot");
+        return;
     }
 
     window.estadoIA.pendenteGasto = {
@@ -186,6 +264,146 @@ async function processarLancamento(frase, fraseOriginal, matchesValores) {
         -------------------------<br>
         Diga **"OK"** para salvar!
     `, "bot");
+}
+
+async function criarCategoriaESalvarGasto(limite, mes, ano) {
+    const dados = window.estadoIA.pendenteNovaCategoria;
+    try {
+        const { data: novaCat, error: errCat } = await supabaseClient.from('categorias').insert([{
+            user_nome: user.user_nome,
+            nome_categoria: dados.nome,
+            icone: 'fa-tags',
+            limite_planejado: limite,
+            gasto_atual: 0,
+            mes: mes,
+            ano: parseInt(ano)
+        }]).select().single();
+
+        if (errCat) throw errCat;
+
+        await supabaseClient.from('gastos').insert([{
+            categoria_id: novaCat.id,
+            user_nome: user.user_nome,
+            valor: dados.valor,
+            descricao: dados.descricao,
+            dia: new Date().getDate(),
+            mes: mes,
+            ano: parseInt(ano)
+        }]);
+
+        addMessage(`✅ Categoria **${dados.nome}** criada com limite de R$ ${limite.toFixed(2)} e gasto de R$ ${dados.valor.toFixed(2)} salvo com sucesso!`, "bot");
+    } catch (e) {
+        addMessage("❌ Erro ao criar categoria.", "bot");
+    }
+    window.estadoIA.pendenteNovaCategoria = null;
+    window.estadoIA.aguardandoLimite = false;
+}
+
+async function consultarSaldoCategoria(frase, mes, ano) {
+    const { data: categorias } = await supabaseClient.from('categorias').select('*').eq('user_nome', user.user_nome).eq('mes', mes);
+
+    const cat = categorias.find(c => {
+        const n = c.nome_categoria.toLowerCase();
+        return frase.includes(n) || (n.length > 3 && frase.includes(n.substring(0, n.length - 1)));
+    });
+
+    if (!cat) {
+        addMessage("🤔 Não encontrei essa categoria para consultar o saldo.", "bot");
+        return;
+    }
+
+    const { data: gastos } = await supabaseClient.from('gastos').select('valor').eq('categoria_id', cat.id).eq('mes', mes);
+    const totalGasto = gastos?.reduce((acc, g) => acc + g.valor, 0) || 0;
+    const saldo = cat.limite_planejado - totalGasto;
+
+    addMessage(`📂 **Categoria: ${cat.nome_categoria}**<br>
+    📉 Já gastou: **R$ ${totalGasto.toFixed(2)}**<br>
+    🎯 Limite: **R$ ${cat.limite_planejado.toFixed(2)}**<br>
+    💰 Você ainda pode gastar: **R$ ${saldo.toFixed(2)}**`, "bot");
+}
+
+async function mostrarExtratoCategoria(frase, mes, ano) {
+    const { data: categorias } = await supabaseClient.from('categorias').select('*').eq('user_nome', user.user_nome).eq('mes', mes);
+
+    const cat = categorias.find(c => {
+        const n = c.nome_categoria.toLowerCase();
+        return frase.includes(n) || (n.length > 3 && frase.includes(n.substring(0, n.length - 1)));
+    });
+
+    if (!cat) {
+        addMessage("🤔 Qual categoria você deseja ver os gastos?", "bot");
+        return;
+    }
+
+    const { data: gastos } = await supabaseClient.from('gastos').select('*').eq('categoria_id', cat.id).eq('mes', mes).order('dia', { ascending: true });
+
+    if (!gastos || gastos.length === 0) {
+        addMessage(`📅 Não há gastos registrados em **${cat.nome_categoria}** este mês.`, "bot");
+        return;
+    }
+
+    let tabela = `<table style="width:100%; border-collapse:collapse; font-size:12px; margin-top:10px;">
+        <tr style="background:#f4f4f4;">
+            <th style="padding:5px; border:1px solid #ddd;">Dia</th>
+            <th style="padding:5px; border:1px solid #ddd;">Descrição</th>
+            <th style="padding:5px; border:1px solid #ddd;">Valor</th>
+        </tr>`;
+
+    gastos.forEach(g => {
+        tabela += `<tr>
+            <td style="padding:5px; border:1px solid #ddd; text-align:center;">${g.dia}</td>
+            <td style="padding:5px; border:1px solid #ddd;">${g.descricao}</td>
+            <td style="padding:5px; border:1px solid #ddd; color:red;">R$ ${g.valor.toFixed(2)}</td>
+        </tr>`;
+    });
+    tabela += `</table>`;
+
+    addMessage(`📋 **Extrato: ${cat.nome_categoria}**<br>${tabela}`, "bot");
+}
+
+async function relatorioLimitesExcedidos(mes, ano) {
+    const { data: categorias } = await supabaseClient.from('categorias').select('*').eq('user_nome', user.user_nome).eq('mes', mes);
+    let excedidos = [];
+
+    for (const cat of categorias) {
+        if (cat.nome_categoria === 'Salario') continue;
+        const { data: gastos } = await supabaseClient.from('gastos').select('valor').eq('categoria_id', cat.id);
+        const total = gastos?.reduce((acc, g) => acc + g.valor, 0) || 0;
+
+        if (total > cat.limite_planejado) {
+            excedidos.push({
+                nome: cat.nome_categoria,
+                gasto: total,
+                limite: cat.limite_planejado,
+                diff: total - cat.limite_planejado
+            });
+        }
+    }
+
+    if (excedidos.length === 0) {
+        addMessage("✅ Nenhuma categoria ultrapassou o limite planejado este mês!", "bot");
+        return;
+    }
+
+    let tabela = `<table style="width:100%; border-collapse:collapse; font-size:12px; margin-top:10px;">
+        <tr style="background:#ffeded;">
+            <th style="padding:5px; border:1px solid #ddd;">Categoria</th>
+            <th style="padding:5px; border:1px solid #ddd;">Gasto</th>
+            <th style="padding:5px; border:1px solid #ddd;">Limite</th>
+            <th style="padding:5px; border:1px solid #ddd;">Ultrapassou</th>
+        </tr>`;
+
+    excedidos.forEach(e => {
+        tabela += `<tr>
+            <td style="padding:5px; border:1px solid #ddd;">${e.nome}</td>
+            <td style="padding:5px; border:1px solid #ddd; color:red;">R$ ${e.gasto.toFixed(2)}</td>
+            <td style="padding:5px; border:1px solid #ddd;">R$ ${e.limite.toFixed(2)}</td>
+            <td style="padding:5px; border:1px solid #ddd; font-weight:bold; color:darkred;">R$ ${e.diff.toFixed(2)}</td>
+        </tr>`;
+    });
+    tabela += `</table>`;
+
+    addMessage(`⚠️ **Categorias fora do limite:**<br>${tabela}`, "bot");
 }
 
 async function salvarGastoBanco(mes, ano) {
@@ -226,23 +444,9 @@ async function executarSalvarSalario(valor, mes, ano) {
 }
 
 async function processarRelatoriosFlexiveis(frase, mes, ano) {
-    // Busca os gastos e o limite planejado das categorias
-    const { data: gastos, error } = await supabaseClient
-        .from('gastos')
-        .select('valor, categorias(nome_categoria)')
-        .eq('user_nome', user.user_nome)
-        .eq('mes', mes)
-        .eq('ano', ano);
-
-    if (error) {
-        addMessage("❌ Erro ao buscar gastos.", "bot");
-        return;
-    }
-
-    // Soma apenas o que NÃO for salário
-    const totalGeral = gastos?.filter(g => g.categorias && g.categorias.nome_categoria !== 'Salario')
-                             .reduce((acc, g) => acc + g.valor, 0) || 0;
-
+    const { data: gastos, error } = await supabaseClient.from('gastos').select('valor, categorias(nome_categoria)').eq('user_nome', user.user_nome).eq('mes', mes).eq('ano', ano);
+    if (error) { addMessage("❌ Erro ao buscar gastos.", "bot"); return; }
+    const totalGeral = gastos?.filter(g => g.categorias && g.categorias.nome_categoria !== 'Salario').reduce((acc, g) => acc + g.valor, 0) || 0;
     addMessage(`📊 Seu gasto total em despesas para **${mes}** é **R$ ${totalGeral.toFixed(2)}**.`, "bot");
 }
 
