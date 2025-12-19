@@ -60,7 +60,8 @@ body, html {
 .content-area {
     flex-grow: 1;
     overflow: hidden;
-    padding-bottom: 20px;
+    /* Ajustado para o conteúdo não ficar escondido atrás do menu que subiu */
+    padding-bottom: 180px;
 }
 
 /* DASHBOARD WRAPPER */
@@ -129,20 +130,25 @@ body, html {
 }
 .cat-card i { font-size: 24px; color: var(--color-secondary); transition: 0.3s; }
 
-/* BOTTOM NAV */
+/* BOTTOM NAV (ILHA FLUTUANTE) */
 .bottom-nav {
     display: flex;
     justify-content: space-around;
     align-items: center;
-    padding: 15px 0 25px 0;
+    padding: 15px 0;
     background: #fff;
-    border-top: 1px solid #f1f1f1;
-    border-top-left-radius: 25px;
-    border-top-right-radius: 25px;
-    box-shadow: 0 -8px 20px rgba(0,0,0,0.08);
-    margin-top: -30px;
-    position: relative;
-    z-index: 100;
+    /* Borda completa para parecer um card flutuante */
+    border: 1px solid #f1f1f1;
+    border-radius: 25px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+
+    /* POSICIONAMENTO PARA SUBIR 5CM */
+    position: absolute;
+    bottom: 45px; /* Sobe o menu para longe dos botões do celular */
+    left: 20px;
+    right: 20px;
+    margin-top: 0;
+    z-index: 1000;
 }
 
 .nav-item {
@@ -158,19 +164,15 @@ body, html {
 .nav-item.active { color: var(--color-primary); }
 .nav-item i { font-size: 22px; margin-bottom: 4px; }
 
-/* --- APLICAÇÃO DA COR VERMELHA APENAS NO ÍCONE --- */
-
-/* Mantém o card exatamente igual (branco), apenas o desenho do ícone muda */
+/* ESTILOS DE ESTOURO E GRÁFICO */
 .cat-grid .cat-card.limite-estourado i {
-    color: #ff5252 !important; /* Vermelho vivo apenas no desenho */
+    color: #ff5252 !important;
 }
 
-/* Efeito opcional: faz o ícone pulsar levemente quando estourar */
 .cat-grid .cat-card.limite-estourado {
-    box-shadow: 0 4px 15px rgba(255, 82, 82, 0.15); /* Sombra vermelha bem discreta */
+    box-shadow: 0 4px 15px rgba(255, 82, 82, 0.15);
 }
 
-/* Estilo do novo botão de gráfico na Home */
 .chart-area-modern {
     background: #ffffff;
     padding: 14px 16px;
@@ -185,9 +187,7 @@ body, html {
 }
 
 .chart-area-modern:active { transform: scale(0.97); background: #fafafa; }
-
 .chart-info { display: flex; align-items: center; gap: 12px; }
-
 .chart-icon-box {
     width: 38px; height: 38px; background: #f3f0ff;
     border-radius: 12px; display: flex; align-items: center;
@@ -196,11 +196,9 @@ body, html {
 
 .chart-text strong { display: block; font-size: 14px; color: var(--color-secondary); }
 .chart-text span { font-size: 11px; color: var(--color-text-sub); }
-
 .chart-visual-preview { display: flex; align-items: flex-end; gap: 3px; height: 25px; }
 .mini-bar { width: 5px; border-radius: 10px; }
 
-/* Tooltip do valor (estilo para o modal) */
 .grafico-tooltip {
     position: absolute; background: #2d3436; color: white;
     padding: 4px 8px; border-radius: 6px; font-size: 10px;
