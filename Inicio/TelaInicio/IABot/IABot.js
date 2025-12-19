@@ -102,10 +102,10 @@ async function processarCerebroIA(input) {
     const meses = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
     const mesAtual = meses[dataAtual.getMonth()];
     const anoAtual = dataAtual.getFullYear();
+    const vStr = extrairValorNumerico(frase);
 
     // 1. ESTADO: AGUARDANDO LIMITE PARA NOVA CATEGORIA
     if (window.estadoIA.aguardandoLimite) {
-        const vStr = extrairValorNumerico(frase);
         if (vStr) {
             const limiteVal = parseFloat(vStr);
             await criarCategoriaESalvarGasto(limiteVal, mesAtual, anoAtual);
@@ -113,7 +113,7 @@ async function processarCerebroIA(input) {
         }
     }
 
-    // 2. PRIORIDADE: TUTORIAL COMPLETO (Todas as funções do código)
+    // 2. PRIORIDADE: TUTORIAL COMPLETO
     if (frase === "tutorial" || frase.includes("ajuda") || frase === "tutorial.") {
         addMessage(`
             📖 **Tudo o que eu posso fazer:**<br><br>
@@ -163,7 +163,6 @@ async function processarCerebroIA(input) {
 
     // 7. ESTADO: AGUARDANDO VALOR DO SALÁRIO
     if (window.estadoIA.aguardandoSalario) {
-        const vStr = extrairValorNumerico(frase);
         if (vStr) {
             await executarSalvarSalario(parseFloat(vStr), mesAtual, anoAtual);
             window.estadoIA.aguardandoSalario = false;
@@ -180,7 +179,6 @@ async function processarCerebroIA(input) {
 
     // 9. LÓGICA DE ATUALIZAR SALÁRIO
     if (frase.includes("salário") || frase.includes("ganhei") || frase.includes("recebi") || frase.includes("atualizar salário")) {
-        const vStr = extrairValorNumerico(frase);
         if (vStr) {
             await executarSalvarSalario(parseFloat(vStr), mesAtual, anoAtual);
         } else {
@@ -197,16 +195,30 @@ async function processarCerebroIA(input) {
     }
 
     // 11. LANÇAMENTO DE GASTOS (IDENTIFICA VALOR)
-    const vStr = extrairValorNumerico(frase);
     if (vStr) {
         await processarLancamento(frase, fraseOriginal, vStr);
         return;
     }
 
-    // 12. SUGESTÕES INTELIGENTES
-    addMessage(`🤔 Não entendi muito bem. Você pretendia saber:<br><br>
-    • **Quanto gastou em uma categoria?** <br><i>"Mostre meus gastos com Compras"</i><br><br>
-    • **Como atualizar seu salário?** <br><i>"Atualizar salário 2500,00 reais"</i><br><br>
+    // 12. INDAGAÇÃO PROATIVA (VOCÊ QUERIA SABER...?)
+    // Tenta encontrar se o usuário mencionou uma categoria existente
+    const { data: categoriasBD } = await supabaseClient.from('categorias').select('nome_categoria').eq('user_nome', user.user_nome);
+    const catSugerida = categoriasBD?.find(c => frase.includes(c.nome_categoria.toLowerCase()));
+
+    if (catSugerida) {
+        addMessage(`🧐 Vi que você mencionou **${catSugerida.nome_categoria}**, mas não entendi o comando. <br><br> **Você não quis dizer:** <br>• *"Quanto gastei em ${catSugerida.nome_categoria}?"* <br>• *"Quanto posso gastar em ${catSugerida.nome_categoria}?"*`, "bot");
+        return;
+    }
+
+    if (frase.includes("quanto")) {
+        addMessage(`🤔 Você queria saber o **total que você já gastou** ou o **saldo restante** de alguma categoria?`, "bot");
+        return;
+    }
+
+    // Fallback Final
+    addMessage(`🤔 Não entendi muito bem. Você não quis dizer:<br><br>
+    • **Lançar um gasto?** <br><i>"Gastei 30 em Lazer"</i><br><br>
+    • **Ver seu resumo?** <br><i>"Quanto eu gastei no total?"</i><br><br>
     Peça o **"Tutorial"** para ver todos os comandos.`, "bot");
 }
 

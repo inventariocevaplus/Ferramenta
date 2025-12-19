@@ -24,7 +24,6 @@ function popularFiltros() {
     const selectMes = document.getElementById('filtro-mes');
     const selectAno = document.getElementById('filtro-ano');
 
-    // Recupera o que foi selecionado na Dash para manter a consistência
     const mesSalvo = localStorage.getItem('dash_mes_cache');
     const anoSalvo = localStorage.getItem('dash_ano_cache');
 
@@ -59,7 +58,7 @@ async function buscarGastos() {
 
     periodoTexto.innerText = `${mes} de ${ano}`;
     lista.innerHTML = "";
-    let somaTotal = 0;
+    let somaApenasGastos = 0; // Nova variável para somar apenas o que não é salário
 
     try {
         const { data: categorias } = await supabaseClient
@@ -85,21 +84,31 @@ async function buscarGastos() {
         if (gastos && gastos.length > 0) {
             msgVazio.classList.add('hidden');
             gastos.forEach(g => {
-                somaTotal += g.valor;
                 const nomeCat = catMap[g.categoria_id] || 'Geral';
+                const isSalario = nomeCat.toLowerCase() === 'salario' || nomeCat.toLowerCase() === 'salário';
+
+                // Define a cor: Verde claro para salário, vermelho claro para despesas
+                const corValor = isSalario ? '#2ecc71' : '#ff7675';
+
+                // Soma apenas se NÃO for salário
+                if (!isSalario) {
+                    somaApenasGastos += g.valor;
+                }
+
                 lista.innerHTML += `
                     <tr>
                         <td><strong>${nomeCat}</strong></td>
                         <td>${g.dia}</td>
                         <td style="color:#636e72">${g.descricao || '-'}</td>
-                        <td>R$ ${g.valor.toLocaleString('pt-BR', {minimumFractionDigits:2})}</td>
+                        <td style="color:${corValor}; font-weight: bold;">R$ ${g.valor.toLocaleString('pt-BR', {minimumFractionDigits:2})}</td>
                     </tr>`;
             });
         } else {
             msgVazio.classList.remove('hidden');
         }
 
-        totalDisplay.innerText = `R$ ${somaTotal.toLocaleString('pt-BR', {minimumFractionDigits:2})}`;
+        // Mostra apenas a soma das despesas no rodapé do extrato
+        totalDisplay.innerText = `R$ ${somaApenasGastos.toLocaleString('pt-BR', {minimumFractionDigits:2})}`;
 
     } catch (err) {
         console.error("Erro:", err);

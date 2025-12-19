@@ -16,10 +16,10 @@ async function loadContent(path) {
     filtrosHeader.innerHTML = "";
 
     if (path === 'Dash') {
-        // Injeta Filtros Customizados com estilo de alta visibilidade
+        // Injeta Filtros Customizados
         filtrosHeader.innerHTML = `
-            <select id="dash-filtro-mes" style="background: rgba(255,255,255,0.25); border: 1px solid rgba(255,255,255,0.3); padding: 5px 8px; border-radius: 8px; font-size: 11px; color: #ffffff !important; font-weight: bold; outline: none; cursor: pointer; appearance: none; -webkit-appearance: none;"></select>
-            <select id="dash-filtro-ano" style="background: rgba(255,255,255,0.25); border: 1px solid rgba(255,255,255,0.3); padding: 5px 8px; border-radius: 8px; font-size: 11px; color: #ffffff !important; font-weight: bold; outline: none; cursor: pointer; appearance: none; -webkit-appearance: none;"></select>
+            <select id="dash-filtro-mes" style="background: rgba(255,255,255,0.25); border: 1px solid rgba(255,255,255,0.3); padding: 5px 8px; border-radius: 8px; font-size: 11px; color: #ffffff !important; font-weight: bold; outline: none; cursor: pointer; appearance: none;"></select>
+            <select id="dash-filtro-ano" style="background: rgba(255,255,255,0.25); border: 1px solid rgba(255,255,255,0.3); padding: 5px 8px; border-radius: 8px; font-size: 11px; color: #ffffff !important; font-weight: bold; outline: none; cursor: pointer; appearance: none;"></select>
         `;
 
         contentArea.innerHTML = `
@@ -36,15 +36,30 @@ async function loadContent(path) {
                         </div>
                     </div>
 
-                    <div style="padding: 10px 0; text-align: center;">
+                    <div style="padding: 5px 0 15px 0;">
                         <button onclick="window.location.href='Indicacao/Indicacao.html'"
-                                style="width: 100%; background: #6c5ce7; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+                                style="width: 100%; background: #6c5ce7; color: white; border: none; padding: 10px; border-radius: 12px; font-size: 13px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 10px rgba(108, 92, 231, 0.2);">
                             <i class="fas fa-gift"></i> INDICAR AMIGO
                         </button>
                     </div>
 
-                    <div class="chart-area" id="chart-container">
-                        <p><i class="fas fa-chart-line" style="margin-right:8px"></i> Gráfico de evolução</p>
+                    <div class="chart-area-modern" id="chart-container">
+                        <div class="chart-info">
+                            <div class="chart-icon-box">
+                                <i class="fas fa-chart-bar"></i>
+                            </div>
+                            <div class="chart-text">
+                                <strong>Evolução Mensal</strong>
+                                <span>Toque para detalhes</span>
+                            </div>
+                        </div>
+                        <div class="chart-visual-preview">
+                            <div class="mini-bar" style="height: 40%; background: #ff7675; opacity: 0.6;"></div>
+                            <div class="mini-bar" style="height: 70%; background: #00C853; opacity: 0.8;"></div>
+                            <div class="mini-bar" style="height: 50%; background: #ff7675; opacity: 0.6;"></div>
+                            <div class="mini-bar" style="height: 90%; background: #00C853; opacity: 0.8;"></div>
+                            <i class="fas fa-chevron-right" style="color: #b2bec3; font-size: 12px; margin-left: 5px;"></i>
+                        </div>
                     </div>
                 </div>
 
@@ -60,11 +75,9 @@ async function loadContent(path) {
                 </div>
             </div>`;
 
-        // Carrega o script da Dashboard com carimbo de tempo para evitar cache
         const script = document.createElement('script');
         script.src = `Dash/Dash.js?v=${new Date().getTime()}`;
         document.body.appendChild(script);
-
     } else {
         contentArea.innerHTML = `<div style="padding:40px; text-align:center; color:#636e72;"><h2>${path}</h2><p>Página em desenvolvimento.</p></div>`;
     }

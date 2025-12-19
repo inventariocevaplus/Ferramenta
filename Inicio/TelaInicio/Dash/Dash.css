@@ -1,18 +1,20 @@
 :root {
-    --color-primary: #00C853;
+    --color-primary: #2ecc71;
     --color-secondary: #021D49;
     --color-bg: #f4f7f6;
     --app-max-width: 480px;
-    --color-danger: #ff5252;
-    --color-danger-light: #ffebee;
+    --color-danger: #ff7675;
+    --color-danger-bg: #ffebee;
+    --color-purple: #6c5ce7;
 }
 
 body {
-    font-family: 'Segoe UI', sans-serif;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     background: #e0e0e0;
     margin: 0;
     display: flex;
     justify-content: center;
+    color: #2d3436;
 }
 
 .app-container {
@@ -22,136 +24,90 @@ body {
     background: var(--color-bg);
     display: flex;
     flex-direction: column;
+    box-shadow: 0 0 30px rgba(0,0,0,0.1);
 }
 
-/* --- Metade Superior (KPIs) --- */
 .dash-upper {
-    height: 35%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
     padding: 20px;
-    flex-shrink: 0;
+    background: #fff;
+    border-radius: 0 0 30px 30px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
 }
 
-.resumo-card {
-    text-align: center;
-    color: var(--color-secondary);
+.resumo-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
 }
 
-.resumo-card .label {
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: #888;
-}
-
-.resumo-card h1 {
-    font-size: 38px;
-    margin: 10px 0;
+.resumo-item small {
+    font-size: 10px;
+    color: #b2bec3;
     font-weight: 800;
 }
 
-/* --- Divisor e Botão Add --- */
-.divider {
-    position: relative;
-    width: 100%;
-    text-align: center;
-    margin: 15px 0;
-    flex-shrink: 0;
+.resumo-item h2 {
+    margin: 5px 0;
+    font-size: 22px;
+    font-weight: 800;
 }
 
-.divider hr {
-    border: 0;
-    border-top: 1px solid #ddd;
-    width: 90%;
-}
-
-.btn-add-cat {
-    position: absolute;
-    top: -15px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: white;
-    border: 1px solid #ddd;
-    padding: 8px 20px;
-    border-radius: 25px;
-    font-size: 11px;
-    font-weight: bold;
-    color: var(--color-secondary);
-    cursor: pointer;
+.chart-area-modern {
+    background: #ffffff;
+    padding: 16px;
+    border-radius: 20px;
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 8px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-    z-index: 10;
+    border: 1px solid #f1f2f6;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.04);
+    cursor: pointer;
 }
 
-/* --- Metade Inferior (O Grid que você gosta) --- */
-.dash-lower {
-    flex: 1;
-    padding: 10px 20px;
-    overflow-y: auto;
-}
-
-.categories-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 20px 10px;
-    padding-top: 20px;
-}
-
-/* --- O CONTAINER DO ÍCONE (cat-card) --- */
-.cat-card {
-    width: 60px;
-    height: 60px;
-    background-color: #ffffff !important; /* Fundo branco garantido */
-    border-radius: 18px;
+.chart-icon-box {
+    width: 42px;
+    height: 42px;
+    background: #f3f0ff;
+    border-radius: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-    cursor: pointer;
-    transition: 0.3s ease;
-    margin: 0 auto; /* Centraliza no grid */
+    color: var(--color-purple);
 }
 
-.cat-card i {
-    font-size: 24px;
-    color: var(--color-secondary);
+.divider { position: relative; margin: 30px 0; }
+.btn-add-cat {
+    position: absolute; top: -18px; left: 50%; transform: translateX(-50%);
+    background: var(--color-purple); color: white; border: none; padding: 10px 24px;
+    border-radius: 25px; font-size: 11px; font-weight: bold; cursor: pointer;
 }
 
-/* --- LOGICA DE ESTOURO (VERMELHO) --- */
-/* Quando o JS colocar a classe 'limite-estourado' */
-.cat-card.limite-estourado {
-    background-color: var(--color-danger-light) !important; /* Fundo vermelho suave */
-    box-shadow: 0 4px 15px rgba(255, 82, 82, 0.2);
+.dash-lower { flex: 1; padding: 10px 20px; overflow-y: auto; }
+.categories-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
+
+.cat-card {
+    width: 68px; height: 68px; background: white; border-radius: 20px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
 }
 
-.cat-card.limite-estourado i {
-    color: var(--color-danger) !important; /* Ícone vermelho vivo */
+/* Gráfico e Modal */
+#canvas-grafico {
+    display: flex !important;
+    height: 240px !important;
+    overflow: visible !important;
 }
 
-/* Efeito de clique */
-.cat-card:active {
-    transform: scale(0.9);
+.coluna-grupo:hover .bar {
+    filter: brightness(0.9);
+    transform: scaleX(1.1);
 }
 
-/* Scrollbar discreta */
-.dash-lower::-webkit-scrollbar { width: 4px; }
-.dash-lower::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
-
-/* --- APLIQUE ISSO NO FINAL DO SEU DASH.CSS --- */
-
-/* Força o fundo do card a ficar vermelho clarinho */
-.categories-grid .cat-card.limite-estourado {
-    background-color: #ffebee !important;
-    border: 1px solid #ff5252 !important;
-    box-shadow: 0 4px 15px rgba(255, 82, 82, 0.2) !important;
+.bar {
+    transition: all 0.3s ease;
 }
 
-/* Força o DESENHO do ícone a ficar vermelho vivo */
-.categories-grid .cat-card.limite-estourado i {
-    color: #ff5252 !important;
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }

@@ -9,32 +9,34 @@
     <link rel="stylesheet" href="Dash.css">
 </head>
 <body>
-
 <div class="app-container">
     <section class="dash-upper">
-        <div class="resumo-card">
-            <span class="label">Gastos Planejados</span>
-            <h1 id="total-planejado">R$ 0,00</h1>
-            <div class="mini-stats">
-                <span>Realizado: <b id="total-realizado">R$ 0,00</b></span>
+        <div class="resumo-header">
+            <div class="resumo-item">
+                <small>GASTO TOTAL</small>
+                <h2 id="total-gasto">R$ 0,00</h2>
             </div>
+            <div class="resumo-item">
+                <small>SALDO RESTANTE</small>
+                <h2 id="salario-mes">R$ 0,00</h2>
+            </div>
+        </div>
+
+        <div class="chart-area-modern" id="chart-container">
         </div>
     </section>
 
     <div class="divider">
         <hr>
         <button class="btn-add-cat" onclick="window.location.href='../categoria/categoria.html'">
-            <i class="fas fa-plus-circle"></i> Categoria
+            <i class="fas fa-plus"></i> CATEGORIA
         </button>
     </div>
 
     <section class="dash-lower">
-        <div class="categories-grid" id="grid-categorias">
-            <div class="empty-state">Clique no + para adicionar categorias</div>
-        </div>
+        <div class="categories-grid" id="grid-categorias"></div>
     </section>
 </div>
-
 <script src="Dash.js"></script>
 </body>
 </html>
